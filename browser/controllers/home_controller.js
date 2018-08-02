@@ -1,4 +1,4 @@
-import LikeAndFollowTops from '../services/LikeAndFollowTops';
+import LikeAndFollowTops from '../services/LikeAndFollowTop';
 
 class HomeController {
   async likeandfollow(params) {

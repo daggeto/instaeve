@@ -1,4 +1,4 @@
-async function open(timeout = 2000) {
+module.exports.open = async function(timeout = 2000) {
   console.log('Opening: ' + this.url);
   await this.page.goto(this.url);
   await this.page.waitFor(timeout);
@@ -17,16 +17,16 @@ function print() {
     });
 }
 
-async function screenshot(){
+module.exports.screenshot = async function(){
   console.log('Doing screenshot...');
   await this.page.screenshot({ path: 'captures/google.png' });
 }
 
-async function sleep(ms) {
+module.exports.sleep = async function(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function isLogged() {
+module.exports.isLogged = async function() {
   console.log("Checking if is logged...");
 
   const [response] = await Promise.all([
@@ -44,4 +44,6 @@ async function isLogged() {
   return true;
 }
 
-module.exports = {open, print, isLogged, screenshot, sleep};
+module.exports.waitForResponse = function(callback) {
+  return this.page.waitForResponse(callback);
+}

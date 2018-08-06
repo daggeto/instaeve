@@ -1,10 +1,10 @@
 import puppeteer from 'puppeteer';
-import {login} from './service_helper';
-import {sleep, random} from '../utils';
+import {login} from '../service_helper';
+import {sleep, random} from '../../utils';
 import {get as fetch} from 'nested-property';
-import LoadCookies from "./LoadCookies";
+import LoadCookies from "../LoadCookies";
 
-import HomePage from '../pages/HomePage';
+import HomePage from '../../pages/HomePage';
 
 interface Params {
   username: string;
@@ -110,7 +110,7 @@ class SyncFollowers {
   }
 }
 
-module.exports.run = function (params) {
-  const instance = new SyncFollowers();
-  return instance.call(params);
+export default (params) => {
+    const instance = new SyncFollowers();
+    return instance.call(params);
 };

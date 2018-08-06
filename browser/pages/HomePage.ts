@@ -16,6 +16,10 @@ class HomePage {
 
   // Returns followers page as it is result of clicking on followers link
   async openFollowers() {
+    if (!this.page) {
+      throw new Error('"page" is missing');
+    }
+
     console.log("Opening followers");
     await this.page.$x(this.FOLLOWERS_XPATH).then(async followersLinks => {
       await followersLinks[0].click();
@@ -31,4 +35,4 @@ class HomePage {
 
 Object.assign(HomePage.prototype, page_helper);
 
-module.exports = HomePage;
+export default HomePage;

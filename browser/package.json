@@ -13,7 +13,6 @@
   "author": "me",
   "license": "ISC",
   "dependencies": {
-    "@babel/core": "^7.0.0-beta.56",
     "body-parser": "^1.18.3",
     "chromy": "^0.5.11",
     "dotenv": "^6.0.0",
@@ -27,9 +26,12 @@
     "typeorm": "^0.2.7"
   },
   "devDependencies": {
+    "@types/es6-shim": "^0.31.37",
+    "@babel/core": "^7.0.0-beta.56",
     "@babel/node": "^7.0.0-beta.56",
     "@babel/plugin-proposal-class-properties": "^7.0.0-beta.56",
     "@babel/preset-env": "^7.0.0-beta.56",
+    "@babel/preset-typescript": "^7.0.0-beta.56",
     "babel-preset-stage-0": "^6.24.1",
     "nodemon": "^1.18.2"
   }

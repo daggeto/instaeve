@@ -35,4 +35,4 @@ class FollowersPage {
 
 Object.assign(FollowersPage.prototype, page_helper);
 
-module.exports = FollowersPage;
+export default FollowersPage;

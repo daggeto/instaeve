@@ -1,7 +1,6 @@
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
-const HomeController = require("./controllers/home_controller");
 const SyncFollowers = require("./services/SyncFollowers");
 const app = express();
 
@@ -26,11 +25,11 @@ global.asyncForEach = async function(array, callback) {
 // app.listen(port, () => {
 //   console.log('We are live on ' + port);
 // });
-// try {
-//   SyncFollowers.run({ username: global.currentUser.username });
-// } catch (e) {
-//   console.log(e);
-// }
+try {
+  SyncFollowers.run({ username: global.currentUser.username });
+} catch (e) {
+  console.log(e);
+}
 
 function fetchUserCredentials(username) {
   const users = process.env.USERS;

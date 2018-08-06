@@ -1,5 +1,5 @@
 import page_helper from './page_helper';
-const fs = require('fs');
+import fs from 'fs';
 
 const LOGIN_BUTTON_XPATH = "//button[text()='Log in']";
 

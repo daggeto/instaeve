@@ -5,13 +5,15 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --exec npm run babel-node -- server.js",
+    "ts": "nodemon --exec npm run babel-node -- src/test.ts",
+    "dev": "nodemon --exec npm run babel-node -- server.ts",
     "cron": "nodemon --exec npm run babel-node -- cron.js",
-    "babel-node": "babel-node --presets=react,env,stage-0"
+    "babel-node": "babel-node --extensions \".ts,.js\""
   },
   "author": "me",
   "license": "ISC",
   "dependencies": {
+    "@babel/core": "^7.0.0-beta.56",
     "body-parser": "^1.18.3",
     "chromy": "^0.5.11",
     "dotenv": "^6.0.0",
@@ -25,9 +27,9 @@
     "typeorm": "^0.2.7"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
+    "@babel/node": "^7.0.0-beta.56",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.56",
+    "@babel/preset-env": "^7.0.0-beta.56",
     "babel-preset-stage-0": "^6.24.1",
     "nodemon": "^1.18.2"
   }

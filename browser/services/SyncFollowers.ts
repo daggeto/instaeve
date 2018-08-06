@@ -6,8 +6,12 @@ import LoadCookies from "./LoadCookies";
 
 import HomePage from '../pages/HomePage';
 
+interface Params {
+  username: string;
+}
+
 class SyncFollowers {
-  async call(params) {
+  async call(params: Params) {
     console.log("[SyncFollowers] Start; Params: [" + global.util.inspect(params) + "]");
     const {username} = params;
 

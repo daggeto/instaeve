@@ -1,6 +1,6 @@
-const express = require('express');
-const app = express();
-
+// const express = require('express');
+// const app = express();
+import "reflect-metadata";
 import SyncFollowers from "./services/SyncFollowers";
 import dotenv from "dotenv";
 
@@ -27,20 +27,32 @@ globalContext.asyncForEach = async function(array, callback) {
   }
 };
 
-// const port = 8000;
-// app.use(bodyParser.urlencoded({ extended: true }));
-// require('./routes')(app, {});
-// app.listen(port, () => {
-//   console.log('We are live on ' + port);
-// });
-// try {
-//   SyncFollowers({ username: globalContext.currentUser.username });
-// } catch (e) {
-//   console.log(e);
+// async function run() {
+//   const user = User.build({ userName: "First Test" });
+//   await user
+//     .save()
+//     .then((user: User) => {
+//       console.log(`User ${user.id} saved!`);
+//     })
+//     .catch(err => {
+//       console.error("User not saved:", err);
+//     });
+
+//   User.findAll().then(all => console.log(all));
 // }
+// // const port = 8000;
+// // app.use(bodyParser.urlencoded({ extended: true }));
+// // require('./routes')(app, {});
+// // app.listen(port, () => {
+// //   console.log('We are live on ' + port);
+// // });
+try {
+  SyncFollowers({ username: globalContext.currentUser.username });
+} catch (e) {
+  console.log(e);
+}
 function fetchUserCredentials(username) {
   const users = process.env.USERS;
-  
 
   const user = users!
     .split(";")

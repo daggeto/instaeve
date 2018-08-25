@@ -4,11 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "ts": "nodemon --exec npm run babel-node -- src/test.ts",
+    "test": "nodemon --exec npm run babel-node -- test.ts",
     "dev": "nodemon --exec npm run babel-node -- server.ts",
     "cron": "nodemon --exec npm run babel-node -- cron.js",
-    "babel-node": "babel-node --extensions \".ts,.js\""
+    "babel-node": "babel-node --extensions \".ts,.js\"",
+    "migrate": "sequelize db:migrate",
+    "rollback": "sequelize db:migrate:undo"
   },
   "author": "me",
   "license": "ISC",
@@ -19,20 +20,25 @@
     "express": "^4.16.3",
     "mongodb": "^3.1.1",
     "mysql": "^2.16.0",
+    "mysql2": "^1.6.1",
     "nested-property": "0.0.7",
     "node-cron": "^1.2.1",
     "phantom": "^6.0.3",
     "puppeteer": "github:daggeto/puppeteer",
-    "typeorm": "^0.2.7"
+    "sequelize": "^4.38.0"
   },
   "devDependencies": {
-    "@types/es6-shim": "^0.31.37",
     "@babel/core": "^7.0.0-beta.56",
     "@babel/node": "^7.0.0-beta.56",
     "@babel/plugin-proposal-class-properties": "^7.0.0-beta.56",
+    "@babel/plugin-proposal-decorators": "^7.0.0-beta.56",
     "@babel/preset-env": "^7.0.0-beta.56",
     "@babel/preset-typescript": "^7.0.0-beta.56",
+    "@types/es6-shim": "^0.31.37",
+    "@types/node": "^10.5.6",
     "babel-preset-stage-0": "^6.24.1",
-    "nodemon": "^1.18.2"
+    "nodemon": "^1.18.2",
+    "reflect-metadata": "^0.1.12",
+    "sequelize-cli": "^4.0.0"
   }
 }

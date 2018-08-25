@@ -1,0 +1,19 @@
+{
+  "type": "mysql",
+  "host": "localhost",
+  "port": 3306,
+  "username": "cron",
+  "password": "mycronwasborn",
+  "database": "instaeve",
+  "synchronize": true,
+  "logging": true,
+  "entities": [
+    "model/**/*.ts"
+  ],
+  "migrations": [
+    "migration/**/*.ts"
+  ],
+  "subscribers": [
+    "subscriber/**/*.ts"
+  ]
+}

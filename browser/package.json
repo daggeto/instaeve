@@ -7,6 +7,7 @@
     "test": "nodemon --exec npm run babel-node -- test.ts",
     "dev": "nodemon --exec npm run babel-node -- server.ts",
     "cron": "nodemon --exec npm run babel-node -- cron.js",
+    "jobs": "nodemon --exec npm run babel-node -- jobs_runner.ts",
     "babel-node": "babel-node --extensions \".ts,.js\"",
     "migrate": "sequelize db:migrate",
     "rollback": "sequelize db:migrate:undo"
@@ -14,6 +15,7 @@
   "author": "me",
   "license": "ISC",
   "dependencies": {
+    "bee-queue": "^1.2.2",
     "body-parser": "^1.18.3",
     "chromy": "^0.5.11",
     "dotenv": "^6.0.0",
@@ -25,6 +27,7 @@
     "node-cron": "^1.2.1",
     "phantom": "^6.0.3",
     "puppeteer": "github:daggeto/puppeteer",
+    "redis": "^2.8.0",
     "sequelize": "^4.38.0"
   },
   "devDependencies": {

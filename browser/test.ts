@@ -1,5 +1,15 @@
 import Models from "./models";
+import FollowInstagramUserJob from "./jobs/FollowInstagramUserJob";
+import UnfollowInstagramUserJob from "./jobs/UnfollowInstagramUserJob";
+
 const { InstagramUser, User, Follower } = Models;
+
+// let i = 0;
+// FollowInstagramUserJob.schedule(i++);
+// UnfollowInstagramUserJob.schedule(i++);
+// FollowInstagramUserJob.schedule(i++);
+// FollowInstagramUserJob.schedule(i++);
+// UnfollowInstagramUserJob.schedule(i++);
 
 // async function run() {
 //   const instaUser = await InstagramUser.find({ username: "test2" });
@@ -8,16 +18,16 @@ const { InstagramUser, User, Follower } = Models;
 // }
 // run();
 
-async function createUserWithEmoji() {
-  const followerInstagramUser = await InstagramUser.create({
-    username: "Test4",
-    full_name: "👏👏👏",
-    is_private: false,
-    is_verified: true
-  });
-}
+// async function createUserWithEmoji() {
+//   const followerInstagramUser = await InstagramUser.create({
+//     username: "Test4",
+//     full_name: "👏👏👏",
+//     is_private: false,
+//     is_verified: true
+//   });
+// }
 
-createUserWithEmoji();
+// createUserWithEmoji();
 
 // async function createInstagramUserWithFollower() {
 //   const user3 = await InstagramUser.findById(3);

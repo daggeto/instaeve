@@ -78,8 +78,8 @@ class SyncFollowers {
 
       const takeOverFollowersCallback = result => {
         console.log("Taking over followers!");
-        console.log("Followers :" + result.followers.length);
-        console.log("Has next :" + result.hasNext);
+        console.log("Followers:" + result.followers.length);
+        console.log("Has next:" + result.hasNext);
 
         this.saveFollowers(
           currentInstagramUser,

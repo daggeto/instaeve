@@ -25,14 +25,9 @@ main.process(async function(job, done) {
     return done(new Error(`Can't find job with name ${jobClassName}`));
   }
 
-  log(job, "Processing");
-  console.log(job.data);
+  job.reportProgress({ status: "started" });
   await jobs[jobClassName].run(params);
-  log(job, "Finished");
+  // job.reportProgress(0, { status: "finished" });
 
   return done(null);
 });
-
-function log(job, message) {
-  console.log(`[#${job.data.jobClassName}][#${job.id}]: ${message}`);
-}

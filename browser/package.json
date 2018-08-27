@@ -15,7 +15,7 @@
   "author": "me",
   "license": "ISC",
   "dependencies": {
-    "bee-queue": "^1.2.2",
+    "bee-queue": "git+https://github.com/bee-queue/bee-queue.git",
     "body-parser": "^1.18.3",
     "chromy": "^0.5.11",
     "dotenv": "^6.0.0",

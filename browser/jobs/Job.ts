@@ -1,8 +1,14 @@
 import Queue from "bee-queue";
 
 export default class Job {
-  static run(params) {
-    const instance = new this();
+  protected job: Job;
+
+  constructor(job) {
+    this.job = job;
+  }
+
+  static run({ job, ...params }) {
+    const instance = new this(job);
     return instance.call(params);
   }
 
@@ -17,5 +23,9 @@ export default class Job {
       .retries(2)
       .save()
       .then(job => {});
+  }
+
+  call(params) {
+    throw new Error(`Method ".call" must be overridden`);
   }
 }

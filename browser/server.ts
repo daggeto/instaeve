@@ -1,63 +1,16 @@
-// const express = require('express');
-// const app = express();
-import "reflect-metadata";
-import SyncFollowers from "./services/SyncFollowers";
-import dotenv from "dotenv";
+import Express from "express";
+import Http from "http";
+import Socket from "socket.io";
 
-dotenv.config();
+const app = Express();
+const http = new Http.Server(app);
+const io = new Socket(http);
 
-interface UserCredentials {
-  username: string;
-  password: string;
-}
+io.on("connection", function(socket) {
+  console.log("a user connected");
+  io.emit("some event", { for: "everyone" });
+});
 
-interface GlobalContext extends NodeJS.Global {
-  currentUser: UserCredentials;
-  util: any;
-  asyncForEach: Function;
-}
-
-const globalContext: GlobalContext = global;
-
-globalContext.currentUser = fetchUserCredentials(process.env.LOGIN_AS);
-globalContext.util = require("util");
-globalContext.asyncForEach = async function(array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
-};
-
-// async function run() {
-//   const user = User.build({ userName: "First Test" });
-//   await user
-//     .save()
-//     .then((user: User) => {
-//       console.log(`User ${user.id} saved!`);
-//     })
-//     .catch(err => {
-//       console.error("User not saved:", err);
-//     });
-
-//   User.findAll().then(all => console.log(all));
-// }
-// // const port = 8000;
-// // app.use(bodyParser.urlencoded({ extended: true }));
-// // require('./routes')(app, {});
-// // app.listen(port, () => {
-// //   console.log('We are live on ' + port);
-// // });
-try {
-  SyncFollowers({ username: globalContext.currentUser.username });
-} catch (e) {
-  console.log(e);
-}
-function fetchUserCredentials(username) {
-  const users = process.env.USERS;
-
-  const user = users!
-    .split(";")
-    .map(user => user.split(":"))
-    .find(user => user[0] === username);
-
-  return { username: user[0], password: user[1] };
-}
+http.listen(3000, function() {
+  console.log("listening on *:3000");
+});

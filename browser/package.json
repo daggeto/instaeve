@@ -8,7 +8,7 @@
     "dev": "nodemon --exec npm run babel-node -- server.ts",
     "cron": "nodemon --exec npm run babel-node -- cron.js",
     "jobs": "nodemon --exec npm run babel-node -- jobs_runner.ts",
-    "babel-node": "babel-node --extensions \".ts,.js\"",
+    "babel-node": "babel-node --extensions \".ts,.js,.jsx\"",
     "migrate": "sequelize db:migrate",
     "rollback": "sequelize db:migrate:undo"
   },

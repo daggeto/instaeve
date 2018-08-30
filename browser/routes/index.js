@@ -1,5 +1,4 @@
-const homeRoutes = require('./home_routes');
-
-module.exports = function(app, db) {
-    homeRoutes(app, db);
-};
+import workersRoutes from "./workers_routes";
+export default function(app, db) {
+  workersRoutes(app, db);
+}

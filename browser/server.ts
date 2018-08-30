@@ -1,16 +1,25 @@
-import Express from "express";
-import Http from "http";
-import Socket from "socket.io";
+import express from "express";
+import bodyParser from "body-parser";
+import routes from "./routes";
 
-const app = Express();
-const http = new Http.Server(app);
-const io = new Socket(http);
+const app = express();
 
-io.on("connection", function(socket) {
-  console.log("a user connected");
-  io.emit("some event", { for: "everyone" });
-});
+const port = 3000;
+app.use(bodyParser.urlencoded({ extended: true }));
+const allowCrossDomain = function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*"); // allow requests from any other server
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE"); // allow these verbs
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Cache-Control"
+  );
 
-http.listen(3000, function() {
-  console.log("listening on *:3000");
+  next();
+};
+
+app.use(allowCrossDomain);
+
+routes(app, {});
+app.listen(port, () => {
+  console.log("We are live on " + port);
 });

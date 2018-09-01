@@ -3,7 +3,8 @@ import eval_helper from "../eval_helper";
 class Article {
   USERNAME_A_PATH = "header div.e1e1d a";
   FOLLOW_BUTTON_PATH = "header div.bY2yH button";
-  LIKE_BUTTON_PATH = "article div.eo2As button.coreSpriteHeartOpen.dCJp8";
+  FIND_LIKE_SPAN = "//span[contains(@aria-label,'Like')]";
+  LIKE_BUTTON = `${this.FIND_LIKE_SPAN}/..`;
 
   handle = null;
   attributes = {
@@ -28,11 +29,8 @@ class Article {
         return false;
       }));
 
-    this.attributes.liked = !(await this.handle
-      .$eval(this.LIKE_BUTTON_PATH + ' span', this.textContains, "Like")
-      .catch(err => {
-        return false;
-      }));
+    const likedSpan = await this.handle.$x(this.FIND_LIKE_SPAN);
+    this.attributes.liked = likedSpan.length == 0;
   }
 
   like() {
@@ -41,8 +39,8 @@ class Article {
 
       return;
     }
-    
-    return this.handle.$(this.LIKE_BUTTON_PATH).then(node => node.click());
+
+    return this.handle.$x(this.LIKE_BUTTON).then(node => node[0].click());
   }
 
   follow() {

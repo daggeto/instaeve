@@ -1,9 +1,43 @@
 import Models from "./models";
-import FollowInstagramUserJob from "./jobs/FollowInstagramUserJob";
-import UnfollowInstagramUserJob from "./jobs/UnfollowInstagramUserJob";
+import LikeAndFollowTopJob from "./jobs/LikeAndFollowTopJob";
+import dotenv from "dotenv";
+import fs from "fs";
 
-const { InstagramUser, User, Follower } = Models;
+dotenv.config();
+const loginAs = process.env.LOGIN_AS;
 
+const currentUser = fetchUserCredentials(loginAs);
+const configs = fetchConfigs(loginAs);
+
+LikeAndFollowTopJob.schedule({ currentUser, ...configs.LikeAndFollowTopJob });
+// const job = {
+//   reportProgress: message => {
+//     console.log(message);
+//   }
+// };
+// LikeAndFollowTopJob.run({ job, currentUser, ...configs.LikeAndFollowTopJob });
+
+function fetchUserCredentials(username) {
+  const users = process.env.USERS;
+  const user = users
+    .split(";")
+    .map(user => user.split(":"))
+    .find(user => user[0] === username);
+
+  return { username: user[0], password: user[1] };
+}
+
+function fetchConfigs(username) {
+  const configFileName = `./configs/${username}_config.json`;
+
+  if (!fs.existsSync(configFileName)) {
+    throw `Config file "${configFileName}" doesn't exist.`;
+    return;
+  }
+
+  const configContents = fs.readFileSync(configFileName);
+  return JSON.parse(configContents);
+}
 // let i = 0;
 // FollowInstagramUserJob.schedule(i++);
 // UnfollowInstagramUserJob.schedule(i++);

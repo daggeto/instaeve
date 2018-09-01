@@ -1,10 +1,15 @@
 import Queue from "bee-queue";
 
 export default class Job {
-  protected job: Job;
+  protected job: { reportProgress: Function };
 
   constructor(job) {
     this.job = job;
+  }
+
+  logProgress(message) {
+    console.log(message);
+    this.job.reportProgress({ message });
   }
 
   static run({ job, ...params }) {
@@ -12,14 +17,10 @@ export default class Job {
     return instance.call(params);
   }
 
-  static schedule(instagramUserId) {
+  static schedule(params) {
     const main = new Queue("main");
-    const job = main.createJob({
-      jobClassName: this.name,
-      id: instagramUserId
-    });
+    const job = main.createJob({ jobClassName: this.name, ...params });
     job
-      .timeout(3000)
       .retries(2)
       .save()
       .then(job => {});

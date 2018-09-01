@@ -15,6 +15,7 @@
   "author": "me",
   "license": "ISC",
   "dependencies": {
+    "autobind-decorator": "^2.1.0",
     "bee-queue": "git+https://github.com/bee-queue/bee-queue.git",
     "body-parser": "^1.18.3",
     "chromy": "^0.5.11",

@@ -8,6 +8,7 @@
     "dev": "nodemon --exec npm run babel-node -- server.ts",
     "cron": "nodemon --exec npm run babel-node -- cron.js",
     "jobs": "nodemon --exec npm run babel-node -- jobs_runner.ts",
+    "run_job": "npm run babel-node -- run_job.ts",
     "babel-node": "babel-node --extensions \".ts,.js,.jsx\"",
     "migrate": "sequelize db:migrate",
     "rollback": "sequelize db:migrate:undo"
@@ -35,7 +36,7 @@
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.56",
     "@babel/node": "^7.0.0-beta.56",
-    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.56",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
     "@babel/plugin-proposal-decorators": "^7.0.0-beta.56",
     "@babel/preset-env": "^7.0.0-beta.56",
     "@babel/preset-typescript": "^7.0.0-beta.56",

@@ -1,12 +1,31 @@
 import Queue from "bee-queue";
-import FollowInstagramUserJob from "../jobs/FollowInstagramUserJob";
 import redis from "redis-promisify";
+import Jobs from "../jobs";
 
 export default function(app, db) {
   const redisClient = redis.createClient();
   const mainQueue = new Queue("main");
-  app.post("/run", async (req, res) => {
-    console.log(req.params);
+  app.post("/workers/run", async (req, res) => {
+    const { jobClassName, hashtag } = req.body;
+
+    if (!jobClassName || !Jobs.hasOwnProperty(jobClassName)) {
+      res
+        .status(400)
+        .json({ errors: [`Can't find job with name ${jobClassName}`] });
+    }
+
+    let params =
+      jobClassName == "LikeAndFollowTopJob"
+        ? {
+            currentUser: global.currentUser,
+            ...global.configs.LikeAndFollowTopJob,
+            hashtag
+          }
+        : req.body;
+
+    Jobs[jobClassName].schedule({ params });
+
+    res.status(200).json({ data: {} });
   });
   app.get("/", async (req, res) => {
     // FollowInstagramUserJob.schedule(1);
@@ -59,7 +78,7 @@ export default function(app, db) {
       jobsLastMessages
     );
 
-    res.json(200, {
+    res.status(200).json({
       data: [
         ...activeJobs,
         ...waitingJobs,

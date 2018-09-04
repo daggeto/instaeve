@@ -2,40 +2,39 @@ import React from "react";
 import socketIOClient from "socket.io-client";
 import Header from "./Header";
 import Main from "./Main";
-
-export default class App extends React.Component {
-  // constructor() {
-  //   super();
-  //   this.state = {
-  //     response: false,
-  //     endpoint: "http://127.0.0.1:3001"
-  //   };
-  // }
-
-  // componentDidMount() {
-  //   const { endpoint } = this.state;
-  //   const socket = socketIOClient(endpoint);
-  //   socket.on("job progress", data => {
-  //     this.setState({ response: data });
-  //   });
-
-  //   fetch("http://localhost:3000")
-  //     .then(res => {
-  //       return res.json();
-  //     })
-  //     .then(response => {
-  //       console.log(response);
-  //     })
-  //     .catch(error => {
-  //       console.log(error);
-  //     });
-  // }
+import Grid from "@material-ui/core/Grid";
+import { withStyles } from "@material-ui/core/styles";
+function styles(theme) {
+  return {
+    root: {
+      flexGrow: 1
+    },
+    paper: {
+      height: 140,
+      width: 100
+    },
+    control: {
+      padding: theme.spacing.unit * 2
+    }
+  };
+}
+class App extends React.Component {
   render() {
+    const { classes } = this.props;
+
     return (
       <>
         <Header />
-        <Main />
+        <Grid container className={classes.root}>
+          <Grid item xs={12}>
+            <Grid container justify="center">
+              <Main />
+            </Grid>
+          </Grid>
+        </Grid>
       </>
     );
   }
 }
+
+export default withStyles(styles)(App);

@@ -6,13 +6,6 @@ export interface Params {
 
 export default class FollowInstagramUserJob extends Job {
   async call(params: Params) {
-    return new Promise(function(resolve, reject) {
-      setTimeout(() => {
-        console.log(`Running FollowInstagramUserJob`);
-        console.log("Params: ");
-        console.log(params);
-        resolve();
-      }, 2000);
-    });
+    this.logProgress(params);
   }
 }

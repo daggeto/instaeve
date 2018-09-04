@@ -40,7 +40,7 @@ export default (sequelize, DataTypes) => {
       foreignKey: "follower_id"
     });
 
-    InstagramUser.hasMany(models.Follower);
+    InstagramUser.hasMany(models.Follower, { as: "FollowersAssoc" });
   };
 
   return InstagramUser;

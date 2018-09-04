@@ -9,18 +9,26 @@ import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Card from "@material-ui/core/Card";
+import CardHeader from "@material-ui/core/CardHeader";
+import CardContent from "@material-ui/core/CardContent";
+import TextField from "@material-ui/core/TextField";
+import Button from "@material-ui/core/Button";
+
 import JSONPretty from "react-json-pretty";
+import Grid from "@material-ui/core/Grid";
 
 import JobsSelector from "./components/JobsSelector";
 
-export default class WorkerIndexPage extends React.Component {
+class WorkerIndexPage extends React.Component {
   constructor() {
     super();
     this.state = {
       response: false,
       loading: false,
       workers: undefined,
-      endpoint: "http://127.0.0.1:3001"
+      endpoint: "http://127.0.0.1:3001",
+      hashtag: "",
+      jobClassName: ""
     };
   }
 
@@ -28,7 +36,6 @@ export default class WorkerIndexPage extends React.Component {
     const { endpoint } = this.state;
     const socket = socketIOClient(endpoint);
     socket.on("job progress", data => {
-      console.log(data);
       const { workers } = this.state;
       if (workers) {
         workers.forEach(worker => {
@@ -40,6 +47,22 @@ export default class WorkerIndexPage extends React.Component {
         this.setState({ workers });
       }
     });
+    this.fetchJobs();
+  }
+
+  onJobClassNameUpdate(jobClassName) {
+    this.setState({ jobClassName });
+  }
+
+  changeHashtag(changes) {
+    const {
+      target: { value }
+    } = changes;
+
+    this.setState({ hashtag: value });
+  }
+
+  fetchJobs() {
     this.setState({ loading: true });
 
     fetch("http://localhost:3000")
@@ -47,7 +70,6 @@ export default class WorkerIndexPage extends React.Component {
         return res.json();
       })
       .then(response => {
-        console.log(response);
         this.setState({
           loading: false,
           workers: response.data
@@ -58,8 +80,30 @@ export default class WorkerIndexPage extends React.Component {
       });
   }
 
+  run() {
+    const { jobClassName, hashtag } = this.state;
+
+    fetch("http://localhost:3000/workers/run", {
+      method: "POST",
+      mode: "cors",
+      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "same-origin", // include, same-origin, *omit
+      headers: {
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      body: JSON.stringify({ jobClassName, hashtag })
+    })
+      .then(response => {
+        this.fetchJobs();
+      })
+      .catch(error => {
+        console.log(error);
+        throw error;
+      });
+  }
+
   render() {
-    const { workers, loading } = this.state;
+    const { workers, loading, jobClassName } = this.state;
     const loadingMarkup = loading && <CircularProgress />;
 
     const workersTableMarkup = !loading &&
@@ -91,16 +135,57 @@ export default class WorkerIndexPage extends React.Component {
           </TableBody>
         </Table>
       );
+
     return (
       <>
-        <Card>
-          <JobsSelector />
-        </Card>
-        <Paper elevation={2}>
-          {loadingMarkup}
-          {workersTableMarkup}
-        </Paper>
+        <Grid container justify="center" spacing={24} direction="column">
+          <Grid item>
+            <Card>
+              <CardHeader title="Task runner" />
+              <CardContent>
+                <Grid
+                  container
+                  direction="row"
+                  justify="flex-start"
+                  alignItems="flex-start"
+                >
+                  <Grid item>
+                    <JobsSelector
+                      onUpdate={this.onJobClassNameUpdate.bind(this)}
+                    />
+                  </Grid>
+                  <Grid item>
+                    <TextField
+                      id="name"
+                      label="Hashtag"
+                      value={this.state.hashtag}
+                      onChange={this.changeHashtag.bind(this)}
+                      margin="normal"
+                    />
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={this.run.bind(this)}
+                    >
+                      Run
+                    </Button>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item>
+            <Card>
+              {loadingMarkup}
+              {workersTableMarkup}
+            </Card>
+          </Grid>
+        </Grid>
       </>
     );
   }
 }
+
+export default WorkerIndexPage;

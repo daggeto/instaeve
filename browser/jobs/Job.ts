@@ -8,7 +8,6 @@ export default class Job {
   }
 
   logProgress(message) {
-    console.log(message);
     this.job.reportProgress({ message });
   }
 

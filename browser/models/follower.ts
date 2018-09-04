@@ -1,5 +1,4 @@
-"use strict";
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   var Follower = sequelize.define(
     "Follower",
     {

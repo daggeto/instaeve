@@ -18,7 +18,12 @@ export default class LikeAndFollowTopJob extends Job {
     // }
 
     const { hashtags, like, follow, currentUser } = params;
-    const hashtag = hashtags[random(0, hashtags.length)];
+    const hashtag = params.hashtag
+      ? params.hashtag
+      : hashtags[random(0, hashtags.length)];
+
+    this.logProgress(`Hashtag #${hashtag} selected`);
+
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
 
@@ -55,7 +60,7 @@ export default class LikeAndFollowTopJob extends Job {
     await asyncForEach(posts, async postId => {
       const photoPage = new PhotoPage(page, postId);
 
-      this.logProgress(`Opening PhotoPage...`);
+      this.logProgress(`Opening PhotoPage: ${postId}`);
       await photoPage.open();
       await sleep(random(0, 2000));
 

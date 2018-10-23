@@ -1,16 +1,26 @@
-import Queue from "bee-queue";
-import Job from "./Job";
-interface Params {}
+import HomePageJob from "./HomePageJob";
+import Unfollow from "../services/Unfollow";
+import ResolveUser from "../services/ResolveUser";
+import { InstagramUserType } from "../models/InstagramUser";
 
-export default class UnfollowInstagramUserJob extends Job {
+export interface Params {
+  currentUserId: InstagramUserType;
+  userToUnfollowId: InstagramUserType;
+}
+
+export default class UnfollowInstagramUserJob extends HomePageJob {
   async call(params: Params) {
-    return new Promise(function(resolve, reject) {
-      setTimeout(() => {
-        console.log(`Running UnfollowInstagramUserJob`);
-        console.log("Params: ");
-        console.log(params);
-        resolve();
-      }, 1000);
+    const { currentUserId, userToUnfollowId } = params;
+
+    const currentUser = await ResolveUser.run({ user: currentUserId });
+    const userToUnfollow = await ResolveUser.run({ user: userToUnfollowId });
+
+    await this.openHomePage(userToUnfollow.username, async homePage => {
+      this.logProgress(`${userToUnfollow.username} page opened. Unfollowing.`);
+      await homePage.unfollow();
+      this.logProgress(`${userToUnfollow.username} unfollowed`);
     });
+
+    await Unfollow.run({ currentUser, userToUnfollow });
   }
 }

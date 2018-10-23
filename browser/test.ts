@@ -1,41 +1,21 @@
-import Unfollow from "./services/Unfollow";
 import Models from "./models";
+import BlockUser from "./services/BlockUser";
+import UnblockUser from "./services/UnblockUser";
+import GetFollowersFor from "./services/GetFollowersFor";
 
-const {
-  Sequelize: { Op },
-  Follower
-} = Models;
+const { InstagramUser, sequelize } = Models;
 
 export interface Params {
   username: string;
 }
 async function run() {
-  const username = "daggetoioioi";
-  const { InstagramUser }: any = Models;
-  const currentInstagramUser = await InstagramUser.find({
-    username
+  const currentUser = await InstagramUser.find({
+    where: { username: "daggetoioioi" }
   });
 
-  let scrappedFollowers = [];
-  let hasNext = false;
+  const result = await GetFollowersFor.run({ user: currentUser });
 
-  const followers = await currentInstagramUser.getFollowers().then(result => {
-    return result.reduce((carry, follower) => {
-      carry[follower.instagram_id] = follower;
-
-      return carry;
-    }, {});
-  });
-  const followersInstagramIds = new Set(["211208408"]);
-
-  const followersAssocIds = [];
-
-  followersInstagramIds.forEach(instagram_id => {
-    if (followers[instagram_id]) {
-      followersAssocIds.push(followers[instagram_id].id);
-    }
-  });
-  console.log(followersAssocIds);
+  console.log(result[0].is_following);
 }
 
 run();

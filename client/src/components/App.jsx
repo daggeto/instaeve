@@ -3,19 +3,13 @@ import socketIOClient from "socket.io-client";
 import Header from "./Header";
 import Main from "./Main";
 import Grid from "@material-ui/core/Grid";
+import Workers from "./Workers";
 import { withStyles } from "@material-ui/core/styles";
 function styles(theme) {
   return {
-    root: {
-      flexGrow: 1
-    },
-    paper: {
-      height: 140,
-      width: 100
-    },
-    control: {
-      padding: theme.spacing.unit * 2
-    }
+    root: { flexGrow: 1 },
+    paper: { height: 140, width: 100 },
+    control: { padding: theme.spacing.unit * 2 }
   };
 }
 class App extends React.Component {
@@ -32,6 +26,7 @@ class App extends React.Component {
             </Grid>
           </Grid>
         </Grid>
+        <Workers />
       </>
     );
   }

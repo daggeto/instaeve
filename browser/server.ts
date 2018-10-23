@@ -3,11 +3,12 @@ import bodyParser from "body-parser";
 import routes from "./routes";
 import dotenv from "dotenv";
 import fs from "fs";
+import redis from "redis";
 
 dotenv.config();
-const loginAs = "daggetoioioi";
-global.currentUser = fetchUserCredentials(loginAs);
-global.configs = fetchConfigs(loginAs);
+
+global.currentUser = login("daggetoioioi");
+global.configs = fetchConfigs(currentUser.username);
 
 const app = express();
 
@@ -32,6 +33,13 @@ routes(app, {});
 app.listen(port, () => {
   console.log("We are live on " + port);
 });
+
+function login(username) {
+  const redisClient = redis.createClient();
+  redisClient.set(`currentUser`, username);
+
+  return fetchUserCredentials(username);
+}
 
 function fetchUserCredentials(username) {
   const users = process.env.USERS;

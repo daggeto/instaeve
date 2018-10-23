@@ -43,8 +43,11 @@
     "@types/es6-shim": "^0.31.37",
     "@types/node": "^10.5.6",
     "babel-preset-stage-0": "^6.24.1",
+    "css-loader": "^1.0.0",
     "nodemon": "^1.18.2",
     "reflect-metadata": "^0.1.12",
-    "sequelize-cli": "^4.0.0"
+    "sass-loader": "^7.1.0",
+    "sequelize-cli": "^4.0.0",
+    "style-loader": "^0.23.0"
   }
 }

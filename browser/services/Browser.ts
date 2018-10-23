@@ -45,7 +45,7 @@ export default class Browser {
 
   private getParams() {
     return {
-      headless: false
+      headless: true
     };
   }
 

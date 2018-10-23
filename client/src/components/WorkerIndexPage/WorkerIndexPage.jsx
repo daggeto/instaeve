@@ -41,6 +41,8 @@ class WorkerIndexPage extends React.Component {
         workers.forEach(worker => {
           if (worker.id == data.id) {
             worker.lastMessage = data.message;
+
+            console.log(data.error);
           }
         });
 

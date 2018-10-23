@@ -30,11 +30,16 @@ global.configs = fetchConfigs(loginAs);
 
 const jobMock = {
   reportProgress: message => {
-    console.log("[PROGRESS] " + message.message);
+    console.log(message.message);
   }
 };
 
-Jobs[job].run({ job: jobMock, ...params });
+Jobs[job].run({
+  job: jobMock,
+  ...params,
+  ...global.configs[job],
+  currentUser: global.currentUser
+});
 
 function fetchUserCredentials(username) {
   const users = process.env.USERS;

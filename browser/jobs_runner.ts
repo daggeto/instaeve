@@ -3,7 +3,17 @@ import Jobs from "./jobs";
 import Express from "express";
 import Http from "http";
 import Socket from "socket.io";
-import redis from "redis";
+import redis from "redis-promisify";
+import utils from "./utils";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+enum JobEvents {
+  Created = "created",
+  Finished = "finished",
+  Failed = "failed"
+}
 
 const app = Express();
 const http = new Http.Server(app);
@@ -24,6 +34,7 @@ main.on("error", err => {
 });
 main.on("failed", (job, err) => {
   console.log(`Job ${job.id} failed with error ${err.message}`);
+  console.log(err);
 });
 
 main.on("job progress", (jobId, progress) => {
@@ -41,19 +52,31 @@ main.process(async function(job, done) {
     );
   }
 
+  await loginFromRedis();
+
   const { jobClassName, ...params } = job.data;
 
   if (!Jobs.hasOwnProperty(jobClassName)) {
     return done(new Error(`Can't find job with name ${jobClassName}`));
   }
 
-  job.reportProgress({ message: "Job started" });
+  job.reportProgress({ message: "Job started", event: JobEvents.Created });
 
   await Jobs[jobClassName].run({ job, ...params }).catch(error => {
-    job.reportProgress({ message: "Job failed: " + error.message });
+    job.reportProgress({
+      message: "Job failed: " + error.message,
+      event: JobEvents.Failed
+    });
     throw error;
   });
-  job.reportProgress({ message: "Job finished" });
+  job.reportProgress({ message: "Job finished", event: JobEvents.Finished });
 
   return done(null);
 });
+
+async function loginFromRedis() {
+  const username = await redisClient.getAsync("currentUser");
+
+  global.currentUser = utils.fetchUserCredentials(username);
+  global.configs = utils.fetchConfigs(currentUser.username);
+}

@@ -6,6 +6,7 @@ export interface InstagramUserType {
   profile_pic_url: string;
   is_private: boolean;
   is_verified: boolean;
+  is_following: boolean;
   //         followed_by_viewer: false,
   //           requested_by_viewer: false
 }
@@ -22,12 +23,12 @@ export default (sequelize, DataTypes) => {
       is_private: DataTypes.BOOLEAN,
       is_verified: DataTypes.BOOLEAN,
       created_at: DataTypes.DATE,
-      updated_at: DataTypes.DATE
+      updated_at: DataTypes.DATE,
+      is_following: DataTypes.VIRTUAL
     },
     { tableName: "instagram_users", underscored: true }
   );
   InstagramUser.associate = function(models) {
-    // InstagramUser.hasMany(models.Follower);
     InstagramUser.belongsToMany(InstagramUser, {
       as: "Followers",
       through: "followers",
@@ -38,6 +39,12 @@ export default (sequelize, DataTypes) => {
       as: "Followings",
       through: "followers",
       foreignKey: "follower_id"
+    });
+
+    InstagramUser.belongsToMany(InstagramUser, {
+      as: "BlockedUsers",
+      through: "blocked_users",
+      foreignKey: "instagram_user_id"
     });
 
     InstagramUser.hasMany(models.Follower, { as: "FollowersAssoc" });

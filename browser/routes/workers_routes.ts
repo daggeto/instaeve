@@ -27,6 +27,65 @@ export default function(app, db) {
 
     res.status(200).json({ data: {} });
   });
+
+  app.get("/workers/group", async (req, res) => {
+    const keys = await redisClient.keysAsync("jobs_runner.job.lastMessage.*");
+
+    const lastMessages = await redisClient
+      .multi(keys.map(key => ["get", key]))
+      .execAsync()
+      .then(res => res);
+
+    const jobsLastMessages = keys.reduce((carry, key) => {
+      const jobId = getJobId(key);
+      carry[jobId] = lastMessages[keys.indexOf(key)];
+      return carry;
+    }, {});
+
+    const active = await getJobsByStatus(
+      mainQueue,
+      "active",
+      { start: 0, end: 25 },
+      jobsLastMessages
+    );
+
+    const waiting = await getJobsByStatus(
+      mainQueue,
+      "waiting",
+      { start: 0, end: 25 },
+      jobsLastMessages
+    );
+    const delayed = await getJobsByStatus(
+      mainQueue,
+      "delayed",
+      { start: 0, end: 25 },
+      jobsLastMessages
+    );
+    const succeeded = await getJobsByStatus(
+      mainQueue,
+      "succeeded",
+      { size: 1000 },
+      jobsLastMessages
+    );
+
+    const failed = await getJobsByStatus(
+      mainQueue,
+      "failed",
+      { size: 1000 },
+      jobsLastMessages
+    );
+
+    res.status(200).json({
+      data: {
+        active,
+        waiting,
+        delayed,
+        succeeded,
+        failed
+      }
+    });
+  });
+
   app.get("/", async (req, res) => {
     // FollowInstagramUserJob.schedule(1);
     // FollowInstagramUserJob.schedule(2);
@@ -92,17 +151,19 @@ export default function(app, db) {
 
 function getJobsByStatus(queue, status, jobsLastMessages, params) {
   return queue.getJobs(status, params).then(jobs => {
-    return jobs.map(job => {
-      const { id, data } = job;
+    return jobs
+      .map(job => {
+        const { id, data } = job;
 
-      return {
-        id,
-        params: data,
-        status: status,
-        name: data.jobClassName,
-        lastMessage: jobsLastMessages[id]
-      };
-    });
+        return {
+          id,
+          params: data,
+          status: status,
+          name: data.jobClassName,
+          lastMessage: jobsLastMessages[id]
+        };
+      })
+      .reverse();
   });
 }
 

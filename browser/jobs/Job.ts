@@ -22,10 +22,14 @@ export default class Job {
     job
       .retries(2)
       .save()
-      .then(job => {});
+      .then(job => {
+        console.log("Then job id: " + job.id);
+      });
+
+    return job;
   }
 
-  call(params) {
+  call(params, callback?) {
     throw new Error(`Method ".call" must be overridden`);
   }
 }

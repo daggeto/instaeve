@@ -3,7 +3,7 @@ import { login } from "../services/service_helper";
 import { sleep, random } from "../utils";
 import { get as fetch } from "nested-property";
 import Browser from "../services/Browser";
-import Unfollow from "../services/Unfollow";
+import DestroyFollowers from "../services/DestroyFollowers";
 
 import HomePage from "../pages/HomePage";
 
@@ -118,7 +118,7 @@ export default class SyncFollowersJob extends Job {
 
       this.logProgress(`Unfollowing: ${followersAssocIds}`);
 
-      Unfollow.run({
+      DestroyFollowers.run({
         currentInstagramUser,
         instagramUserIds: followersAssocIds
       });

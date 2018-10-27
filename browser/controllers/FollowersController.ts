@@ -12,9 +12,12 @@ export default class FollowersController extends Controller {
       user: currentUser
     });
 
-    return followers.map(follower => {
-      return this.serializeUser(follower);
-    });
+    return {
+      followers: followers.map(follower => {
+        return this.serializeUser(follower);
+      }),
+      totalCount: followers.length
+    };
   }
 
   async create(params) {
@@ -46,8 +49,8 @@ export default class FollowersController extends Controller {
 
     const currentUser = await this.getCurrentUser();
     await UnfollowInstagramUserJob.schedule({
-      currentUserId: currentUser.id,
-      userToUnfollowId: userToUnfollow.id
+      currentUserParam: currentUser,
+      userToUnfollowParam: userToUnfollow
     });
 
     return {};

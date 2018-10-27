@@ -51,7 +51,8 @@ class FollowersPage extends React.Component {
       .then(response => {
         this.setState({
           loading: false,
-          followers: response.data
+          followers: response.data.followers,
+          totalCount: response.data.totalCount
         });
       })
       .catch(error => {
@@ -126,7 +127,7 @@ class FollowersPage extends React.Component {
   }
 
   render() {
-    const { followers, loading, message } = this.state;
+    const { followers, loading, message, totalCount } = this.state;
     const { classes } = this.props;
     const successActionMessageMarkup = (
       <Snackbar
@@ -191,11 +192,17 @@ class FollowersPage extends React.Component {
       </Table>
     );
 
+    let title = "Followers Users";
+
+    if (totalCount) {
+      title += ` (${totalCount})`;
+    }
+
     return (
       <Grid container justify="center" spacing={24} direction="column">
         <Grid item>
           <Card>
-            <CardHeader title="Followers Users" />
+            <CardHeader title={title} />
             <CardContent>
               {followersMarkup}
               {loadingMarkup}

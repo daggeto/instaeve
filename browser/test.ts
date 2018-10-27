@@ -2,6 +2,7 @@ import Models from "./models";
 import BlockUser from "./services/BlockUser";
 import UnblockUser from "./services/UnblockUser";
 import GetFollowersFor from "./services/GetFollowersFor";
+import Unfollow from "./services/Unfollow";
 
 const { InstagramUser, sequelize } = Models;
 
@@ -13,9 +14,8 @@ async function run() {
     where: { username: "daggetoioioi" }
   });
 
-  const result = await GetFollowersFor.run({ user: currentUser });
-
-  console.log(result[0].is_following);
+  const userToUnfollow = await InstagramUser.findById(49);
+  Unfollow.run({ currentUser, userToUnfollow });
 }
 
 run();

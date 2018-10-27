@@ -21,8 +21,13 @@ export default class ResolveUser extends Service {
 
       return result;
     }
+
     if (typeof user === "number") {
       return await InstagramUser.findById(user);
+    }
+
+    if (user instanceof Object && user.id) {
+      return await InstagramUser.findById(user.id);
     }
 
     return user;

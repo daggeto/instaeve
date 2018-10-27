@@ -11,6 +11,7 @@ export interface Params {
 export default class Unfollow extends Service {
   async call(params: Params) {
     const { currentUser, userToUnfollow } = params;
+
     await currentUser.removeFollowing(userToUnfollow);
   }
 }

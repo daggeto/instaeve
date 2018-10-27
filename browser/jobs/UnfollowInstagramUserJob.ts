@@ -4,16 +4,16 @@ import ResolveUser from "../services/ResolveUser";
 import { InstagramUserType } from "../models/InstagramUser";
 
 export interface Params {
-  currentUserId: InstagramUserType;
-  userToUnfollowId: InstagramUserType;
+  currentUserParam: InstagramUserType;
+  userToUnfollowParam: InstagramUserType;
 }
 
 export default class UnfollowInstagramUserJob extends HomePageJob {
   async call(params: Params) {
-    const { currentUserId, userToUnfollowId } = params;
+    const { currentUserParam, userToUnfollowParam } = params;
 
-    const currentUser = await ResolveUser.run({ user: currentUserId });
-    const userToUnfollow = await ResolveUser.run({ user: userToUnfollowId });
+    const currentUser = await ResolveUser.run({ user: currentUserParam });
+    const userToUnfollow = await ResolveUser.run({ user: userToUnfollowParam });
 
     await this.openHomePage(userToUnfollow.username, async homePage => {
       this.logProgress(`${userToUnfollow.username} page opened. Unfollowing.`);

@@ -16,7 +16,8 @@ export default class BlockedUsersController extends Controller {
     await BlockUser.run({ currentUser, blockedUser });
 
     const job = UnfollowInstagramUserJob.schedule({
-      username: blockedUser.username
+      currentUserParam: currentUser,
+      userToUnfollowParam: blockedUser.id
     });
     return { job };
   }

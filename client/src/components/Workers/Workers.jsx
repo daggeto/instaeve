@@ -1,11 +1,13 @@
 import React from "react";
 import socketIOClient from "socket.io-client";
 
-import { ExpandLess, ExpandMore } from "@material-ui/icons";
+import { ExpandLess, ExpandMore, Add } from "@material-ui/icons";
 import { Tab, Tabs } from "@material-ui/core";
 import { withStyles } from "@material-ui/core/styles";
 import WorkersTab from "../WorkersTab";
 import StatusBar from "./components/StatusBar";
+import Modal from "@material-ui/core/Modal";
+import RunJobModal from "./components/RunJobModal";
 
 const styles = theme => ({
   actionBar: {
@@ -54,7 +56,7 @@ const TABS = {
   delayed: 4
 };
 
-const refreshEvents = ["created", "failed", "finished"];
+const refreshEvents = ["created", "failed", "finished", "queued"];
 
 class Workers extends React.Component {
   constructor() {
@@ -64,7 +66,8 @@ class Workers extends React.Component {
       expanded: true,
       selectedTab: TABS.active,
       workers: {},
-      loading: false
+      loading: false,
+      runJobModalOpen: false
     };
   }
 
@@ -120,9 +123,22 @@ class Workers extends React.Component {
     this.setState({ selectedTab: value });
   }
 
+  openRunJobModal() {
+    this.setState({ runJobModalOpen: true });
+  }
+
+  closeRunJobModal() {
+    this.setState({ runJobModalOpen: false });
+  }
+
+  onRun() {
+    this.fetchJobs();
+    this.closeRunJobModal();
+  }
+
   render() {
     const { classes } = this.props;
-    const { expanded, selectedTab, workers } = this.state;
+    const { expanded, selectedTab, workers, runJobModalOpen } = this.state;
 
     let containerClasses = [classes.actionBar];
     containerClasses.push(expanded ? classes.maximized : classes.minimized);
@@ -144,14 +160,22 @@ class Workers extends React.Component {
           expanded ? classes.actionBarMaximized : classes.actionBarMinimized
         }
       >
+        <Add onClick={this.openRunJobModal.bind(this)} />
         {statusBarMarkup}
         {expanded ? minimizeMarkup : maximizeMarkup}
       </div>
     );
 
+    const runJobModal = (
+      <Modal open={runJobModalOpen} onClose={this.closeRunJobModal.bind(this)}>
+        <RunJobModal onRun={this.onRun.bind(this)} />
+      </Modal>
+    );
+
     return (
       <div className={containerClasses.join(" ")}>
         {actionBar}
+        {runJobModal}
 
         <div className={classes.background} />
         <div className={classes.tabs}>

@@ -6,26 +6,27 @@ export default function(app, db) {
   const redisClient = redis.createClient();
   const mainQueue = new Queue("main");
   app.post("/workers/run", async (req, res) => {
-    const { jobClassName, hashtag } = req.body;
-
+    const { jobClassName, ...params } = req.body;
     if (!jobClassName || !Jobs.hasOwnProperty(jobClassName)) {
       res
         .status(400)
         .json({ errors: [`Can't find job with name ${jobClassName}`] });
     }
 
-    let params =
-      jobClassName == "LikeAndFollowTopJob"
-        ? {
-            currentUser: global.currentUser,
-            ...global.configs.LikeAndFollowTopJob,
-            hashtag
-          }
-        : req.body;
+    let jobParams = {
+      currentUser: global.currentUser,
+      ...global.configs[jobClassName],
+      ...params
+    };
+    if (!Jobs[jobClassName]) {
+      res.status(404).json({ data: { error: "Can't find job" } });
 
-    Jobs[jobClassName].schedule({ params });
+      return;
+    }
+    console.log(params);
+    // const job = Jobs[jobClassName].schedule({ ...jobParams });
 
-    res.status(200).json({ data: {} });
+    // res.status(200).json({ data: { job } });
   });
 
   app.get("/workers/group", async (req, res) => {

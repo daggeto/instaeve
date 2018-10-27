@@ -26,6 +26,8 @@ export default class Job {
         console.log("Then job id: " + job.id);
       });
 
+    job.reportProgress({ message: "Job queued", event: "queued" });
+
     return job;
   }
 

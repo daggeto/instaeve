@@ -7,6 +7,7 @@ export interface InstagramUserType {
   is_private: boolean;
   is_verified: boolean;
   is_following: boolean;
+  is_blocked: boolean;
   //         followed_by_viewer: false,
   //           requested_by_viewer: false
 }
@@ -24,7 +25,8 @@ export default (sequelize, DataTypes) => {
       is_verified: DataTypes.BOOLEAN,
       created_at: DataTypes.DATE,
       updated_at: DataTypes.DATE,
-      is_following: DataTypes.VIRTUAL
+      is_following: DataTypes.VIRTUAL,
+      is_blocked: DataTypes.VIRTUAL
     },
     { tableName: "instagram_users", underscored: true }
   );

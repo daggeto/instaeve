@@ -120,6 +120,28 @@ class FollowersPage extends React.Component {
         });
   }
 
+  unblock(id) {
+    return () =>
+      fetch("http://localhost:3000/blocked-users/", {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id })
+      })
+        .then(response => {
+          this.setState({
+            message: "User unblocked"
+          });
+
+          this.fetchFollowers();
+        })
+        .catch(error => {
+          console.log(error);
+        });
+  }
+
   handleSnackbarClose() {
     this.setState({
       message: null
@@ -161,14 +183,13 @@ class FollowersPage extends React.Component {
                 <TableCell>
                   <Button
                     className={classes.button}
+                    variant="contained"
+                    color="primary"
                     onClick={
                       follower.isFollowing
                         ? this.unfollow(follower.id)
                         : this.follow(follower.id)
                     }
-                    {...(follower.isFollowing
-                      ? {}
-                      : { variant: "contained", color: "primary" })}
                   >
                     {follower.isFollowing ? "Unfollow" : "Follow"}
                   </Button>
@@ -177,11 +198,15 @@ class FollowersPage extends React.Component {
                     placement="left"
                   >
                     <Button
-                      onClick={this.block(follower.id)}
+                      onClick={
+                        follower.isBlocked
+                          ? this.unblock(follower.id)
+                          : this.block(follower.id)
+                      }
                       variant="contained"
                       color="secondary"
                     >
-                      Block
+                      {follower.isBlocked ? "Unblock" : "Block"}
                     </Button>
                   </Tooltip>
                 </TableCell>

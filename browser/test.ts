@@ -14,8 +14,9 @@ async function run() {
     where: { username: "daggetoioioi" }
   });
 
-  const userToUnfollow = await InstagramUser.findById(49);
-  Unfollow.run({ currentUser, userToUnfollow });
+  const result = await GetFollowersFor.run({ user: currentUser });
+
+  console.log(result);
 }
 
 run();

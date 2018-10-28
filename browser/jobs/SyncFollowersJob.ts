@@ -101,6 +101,8 @@ export default class SyncFollowersJob extends Job {
             this.logProgress(
               "Error taking over next followers page: " + error.message
             );
+
+            throw error;
           });
         this.logProgress(`Followers scanned: ${followers.length}`);
         await sleep(random(500, 1500));
@@ -193,7 +195,7 @@ export default class SyncFollowersJob extends Job {
 
   takeoverFollowers(page) {
     return new Promise((resolve, reject) => {
-      page
+      page.page
         .waitForResponse(async response => {
           const headers = await response.headers();
           if (

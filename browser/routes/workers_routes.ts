@@ -23,10 +23,10 @@ export default function(app, db) {
 
       return;
     }
-    console.log(params);
-    // const job = Jobs[jobClassName].schedule({ ...jobParams });
 
-    // res.status(200).json({ data: { job } });
+    const job = Jobs[jobClassName].schedule({ ...jobParams });
+
+    res.status(200).json({ data: { job } });
   });
 
   app.get("/workers/group", async (req, res) => {

@@ -24,7 +24,6 @@ const { job, ...params } = args;
 if (!job || !Jobs.hasOwnProperty(job)) {
   throw new Error("Job not exists");
 }
-
 global.currentUser = fetchUserCredentials(loginAs);
 global.configs = fetchConfigs(loginAs);
 
@@ -38,7 +37,7 @@ Jobs[job].run({
   job: jobMock,
   ...params,
   ...global.configs[job],
-  currentUser: global.currentUser
+  username: global.currentUser.username
 });
 
 function fetchUserCredentials(username) {

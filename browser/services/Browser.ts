@@ -11,8 +11,8 @@ export default class Browser {
     this.onConsole = onConsole;
   }
 
-  async launch() {
-    this.browser = await puppeteer.launch(this.getParams());
+  async launch(params = { headless: true }) {
+    this.browser = await puppeteer.launch(params);
 
     if (!this.browser) {
       throw new Error("Browser doesn't initiated");
@@ -43,12 +43,6 @@ export default class Browser {
     this.browser.close();
   }
 
-  private getParams() {
-    return {
-      headless: true
-    };
-  }
-
   private getPageParams() {
     return {
       viewport: { width: 360, height: 640, isMobile: true },
@@ -58,9 +52,10 @@ export default class Browser {
   }
 
   static async launch(params) {
-    const instance = new Browser(params);
+    console.log(params);
+    const instance = new Browser(params.browser);
 
-    await instance.launch();
+    await instance.launch(params.launch);
 
     return instance;
   }

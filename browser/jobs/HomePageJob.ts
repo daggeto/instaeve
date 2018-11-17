@@ -9,15 +9,17 @@ export interface Params {
 export default class HomePageJob extends Job {
   async openHomePage(username: string, actionCallback?: Function) {
     const browser = await Browser.launch({
-      onConsole: error => {
-        if (
-          error.text().includes("the server responded with a status of 429")
-        ) {
-          this.logProgress("To many requests :( Let's wait a little bit...");
-          this.logProgress(
-            "We need to mark current job as failed and leave to do it again."
-          );
-          return;
+      browser: {
+        onConsole: error => {
+          if (
+            error.text().includes("the server responded with a status of 429")
+          ) {
+            this.logProgress("To many requests :( Let's wait a little bit...");
+            this.logProgress(
+              "We need to mark current job as failed and leave to do it again."
+            );
+            return;
+          }
         }
       }
     });

@@ -4,6 +4,7 @@ import { sleep, random } from "../utils";
 import { get as fetch } from "nested-property";
 import Browser from "../services/Browser";
 import DestroyFollowers from "../services/DestroyFollowers";
+import ResolveUser from "../services/ResolveUser";
 
 import HomePage from "../pages/HomePage";
 
@@ -16,20 +17,26 @@ export interface Params {
 
 const { InstagramUser }: any = Models;
 
+const SLEEP_FROM = 1500;
+const SLEEP_TO = 2000;
+
 export default class SyncFollowersJob extends Job {
   async call(params: Params) {
     const { username } = params;
 
     const browser = await Browser.launch({
-      onConsole: error => {
-        if (
-          error.text().includes("the server responded with a status of 429")
-        ) {
-          this.logProgress("To many requests :( Let's wait a little bit...");
-          this.logProgress(
-            "We need to mark current job as failed and leave to do it again."
-          );
-          return;
+      launch: { headless: true },
+      browser: {
+        onConsole: error => {
+          if (
+            error.text().includes("the server responded with a status of 429")
+          ) {
+            this.logProgress("To many requests :( Let's wait a little bit...");
+            this.logProgress(
+              "We need to mark current job as failed and leave to do it again."
+            );
+            return;
+          }
         }
       }
     });
@@ -43,15 +50,15 @@ export default class SyncFollowersJob extends Job {
         await login(homePage, browser.page);
       }
 
-      const currentInstagramUser = await InstagramUser.find({
-        username
-      });
+      const currentInstagramUser = await ResolveUser.run({ user: username });
+
       if (!currentInstagramUser) {
         throw new Error(`InstagramUser ${username} not exists`);
       }
 
       let scrappedFollowers = [];
       let hasNext = false;
+      let firstRequestReceived = false;
 
       const followers = await currentInstagramUser
         .getFollowers()
@@ -65,6 +72,12 @@ export default class SyncFollowersJob extends Job {
       const followersInstagramIds = new Set(Object.keys(followers));
 
       const takeOverFollowersCallback = result => {
+        console.log(result);
+
+        if (!result.followers) {
+          return;
+        }
+
         this.logProgress(
           `Followers count: ${result.followers.length}\n Has next: ${
             result.hasNext
@@ -82,19 +95,19 @@ export default class SyncFollowersJob extends Job {
         hasNext = result.hasNext;
       };
 
-      this.logProgress("Taking over followers!");
-      this.takeoverFollowers(homePage)
-        .then(takeOverFollowersCallback)
-        .catch(error => {
-          throw error;
-        });
+      await homePage.page.setRequestInterception(true);
+      homePage.page.on("request", async interceptedRequest => {
+        if (
+          !interceptedRequest
+            .url()
+            .includes("https://www.instagram.com/graphql/query/?query_hash")
+        ) {
+          return interceptedRequest.continue();
+        }
 
-      const followersPage = await homePage.openFollowers();
+        this.logProgress(`Graphql request intercepted`);
 
-      while (hasNext) {
-        this.logProgress("Scrolling...");
-        await followersPage.scrollToLastRow();
-        await this.takeoverFollowers(homePage)
+        this.takeoverFollowers(homePage)
           .then(takeOverFollowersCallback)
           .catch(error => {
             hasNext = false;
@@ -104,31 +117,74 @@ export default class SyncFollowersJob extends Job {
 
             throw error;
           });
-        this.logProgress(`Followers scanned: ${followers.length}`);
-        await sleep(random(500, 1500));
+        this.logProgress("Continuing request");
+        await sleep(random(SLEEP_FROM, SLEEP_TO));
+        interceptedRequest.continue();
+      });
+
+      // this.logProgress("Taking over followers!");
+      // this.takeoverFollowers(homePage)
+      //   .then(takeOverFollowersCallback)
+      //   .then(() => {
+      //     firstRequestReceived = true;
+      //   })
+      //   .catch(error => {
+      //     throw error;
+      //   });
+
+      const followersPage = await homePage.openFollowers();
+
+      while (hasNext) {
+        this.logProgress("Scrolling...");
+        await followersPage.scrollToLastRow();
+        //   //   await this.takeoverFollowers(homePage)
+        //   //     .then(takeOverFollowersCallback)
+        //   //     .catch(error => {
+        //   //       hasNext = false;
+        //   //       this.logProgress(
+        //   //         "Error taking over next followers page: " + error.message
+        //   //       );
+        //   //       throw error;
+        //   //     });
+        //   //   this.logProgress(`Followers scanned: ${followers.length}`);
+        //   //   await sleep(random(SLEEP_FROM, SLEEP_TO));
       }
 
       this.logProgress(`Total scanned followers: ${scrappedFollowers.length}`);
 
-      const followersAssocIds = [];
-
-      followersInstagramIds.forEach(instagram_id => {
-        if (followers[instagram_id]) {
-          followersAssocIds.push(followers[instagram_id].id);
-        }
-      });
-
-      this.logProgress(`Unfollowing: ${followersAssocIds}`);
-
-      DestroyFollowers.run({
-        currentInstagramUser,
-        instagramUserIds: followersAssocIds
-      });
+      if (firstRequestReceived) {
+        this.deleteMissingFollowers(
+          currentInstagramUser,
+          followersInstagramIds,
+          followers
+        );
+      }
     } catch (e) {
       this.logProgress("Failed: " + e.message);
     }
 
     await browser.close();
+  }
+
+  async deleteMissingFollowers(
+    currentInstagramUser,
+    followersInstagramIds,
+    followers
+  ) {
+    const followersAssocIds = [];
+
+    followersInstagramIds.forEach(instagram_id => {
+      if (followers[instagram_id]) {
+        followersAssocIds.push(followers[instagram_id].id);
+      }
+    });
+
+    this.logProgress(`Unfollowing: ${followersAssocIds}`);
+
+    DestroyFollowers.run({
+      currentInstagramUser,
+      instagramUserIds: followersAssocIds
+    });
   }
 
   async saveFollowers(
@@ -196,31 +252,44 @@ export default class SyncFollowersJob extends Job {
   takeoverFollowers(page) {
     return new Promise((resolve, reject) => {
       page.page
-        .waitForResponse(async response => {
-          const headers = await response.headers();
-          if (
-            !response
-              .url()
-              .includes("https://www.instagram.com/graphql/query/?query_hash")
-          ) {
-            return false;
-          }
+        .waitForResponse(
+          async response => {
+            if (
+              !response
+                .url()
+                .includes("https://www.instagram.com/graphql/query/?query_hash")
+            ) {
+              return false;
+            }
 
-          const result = await response.json();
+            const result = await response.json();
+            if (!fetch(result, "data.user.edge_followed_by")) {
+              return false;
+            }
 
-          const hasNext = fetch(
-            result,
-            "data.user.edge_followed_by.page_info.has_next_page"
-          );
-          const followers = fetch(result, "data.user.edge_followed_by.edges");
-          resolve({ followers, hasNext });
+            console.log("Graphql response catched");
 
-          return true;
-        })
+            const hasNext = fetch(
+              result,
+              "data.user.edge_followed_by.page_info.has_next_page"
+            );
+            const followers = fetch(result, "data.user.edge_followed_by.edges");
+
+            if (!followers) {
+              console.log("No followers found in response");
+              console.log(result);
+            }
+
+            resolve({ followers, hasNext });
+
+            return true;
+          },
+          { timeout: 60000 }
+        )
         .catch(error => {
           reject(error);
 
-          return true;
+          return false;
         });
     });
   }

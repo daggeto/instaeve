@@ -25,10 +25,13 @@ class FollowersPage {
 
   async scrollToLastRow() {
     console.log("Scrolling to last row");
-    return this.page.$x(this.LAST_USER_ROW_XPATH).then(async lastRow => {
-      await lastRow[0].asElement().hover();
-      console.log("Scrolled to " + lastRow[0]);
-    });
+    return this.page
+      .$x(this.LAST_USER_ROW_XPATH)
+      .then(async lastRow => {
+        await lastRow[0].asElement().hover();
+        console.log("Scrolled to " + lastRow[0]);
+      })
+      .catch(error => console.log("Error"));
   }
 }
 

@@ -62,7 +62,8 @@ export default class FollowersController extends Controller {
       username: user.username,
       imageSrc: user.profile_pic_url,
       isFollowing: user.is_following,
-      isBlocked: user.is_blocked
+      isBlocked: user.is_blocked,
+      isFavorite: user.is_favorite,
     };
   }
 }

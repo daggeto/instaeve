@@ -4,3 +4,5 @@ SELECT `InstagramUsers`.username , `InstagramUsers`.`id` FROM `followers` AS `Fo
 select username, count(*) from `instagram_users` group by username order by count(*) asc;
 
 select count(*) from `followers` where instagram_user_id = 1;
+
+select * from favorite

@@ -145,7 +145,23 @@ class FollowersPage extends React.Component {
   }
 
   addToFavorite(id) {
-    return () => console.log(`Add #{id}`);
+    return () =>
+      fetch("http://localhost:3000/favorites/", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({id})
+      })
+        .then(response => {
+          this.setState({
+            message: "User added to favorites"
+          });
+        })
+        .catch(error => {
+          console.log(error);
+        });
   }
 
   removeFromFavorite(id) {

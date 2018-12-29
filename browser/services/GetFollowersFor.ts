@@ -23,16 +23,28 @@ const IS_BLOCKED_CASE =
   "END) AS `is_blocked`";
 // InstagramUser -> all followers with user_id as current -> check for every follower if current user are in their followers
 // ->
+
+const IS_FAVORITE_CASE =
+  "(CASE " +
+  "WHEN `favorites`.`instagram_user_id` IS NOT NULL " +
+  "THEN TRUE " +
+  "ELSE FALSE " +
+  "END) AS `is_favorite`";
+
+
 const QUERY =
   "SELECT `InstagramUser`.*, " +
   IS_FOLLOWING_CASE +
   ", " +
   IS_BLOCKED_CASE +
+  ", " +
+  IS_FAVORITE_CASE +
   " " +
   "FROM `instagram_users` AS `InstagramUser` " +
   "INNER JOIN `followers` AS `followers` ON `InstagramUser`.`id` = `followers`.`follower_id` AND `followers`.`instagram_user_id` = ? " +
-  "LEFT JOIN `followers` AS `followee` ON `followee`.`follower_id` = ? AND `followee`.`instagram_user_id` = `followers`.`follower_id`" +
-  "LEFT JOIN `blocked_users` ON `blocked_users`.`instagram_user_id` = ? and `blocked_users`.`blocked_user_id` = `followers`.`follower_id`";
+  "LEFT JOIN `followers` AS `followee` ON `followee`.`follower_id` = ? AND `followee`.`instagram_user_id` = `followers`.`follower_id` " +
+  "LEFT JOIN `blocked_users` ON `blocked_users`.`instagram_user_id` = ? and `blocked_users`.`blocked_user_id` = `followers`.`follower_id` " +
+  "LEFT JOIN `favorites` ON `favorites`.`instagram_user_id` = ? and `favorites`.`favorite_id` = `followers`.`follower_id`";
 
 export default class GetFollowersFor extends Service {
   call(params: Params) {
@@ -40,7 +52,7 @@ export default class GetFollowersFor extends Service {
 
     return sequelize.query(QUERY, {
       model: InstagramUser,
-      replacements: [user.id, user.id, user.id]
+      replacements: [user.id, user.id, user.id, user.id]
     });
   }
 }

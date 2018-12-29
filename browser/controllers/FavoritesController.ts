@@ -1,6 +1,9 @@
 import Controller from "./Controller";
 
 import ResolveUser from "../services/ResolveUser";
+import AddToFavorite from "../services/AddToFavorite";
+import RemoveFromFavorite from "../services/RemoveFromFavorite";
+
 
 export default class FavoritesController extends Controller {
   async create(params) {
@@ -11,10 +14,11 @@ export default class FavoritesController extends Controller {
     }
 
     const currentUser = await this.getCurrentUser();
-    const favoriteUser = await ResolveUser.run({user: id});
+    const favorite = await ResolveUser.run({user: id});
 
-    await currentUser.addFavorite(favoriteUser);
-    return {};
+    await AddToFavorite.run({currentUser, favorite});
+    
+    return {success: true};
   }
 
   async delete(params) {
@@ -25,6 +29,9 @@ export default class FavoritesController extends Controller {
     }
 
     const currentUser = await this.getCurrentUser();
+    const favorite = await ResolveUser.run({ user: id });
+    
+    await RemoveFromFavorite.run({ currentUser, favorite });
 
     return {success: true};
   }

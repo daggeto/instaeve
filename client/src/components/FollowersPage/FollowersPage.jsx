@@ -158,6 +158,8 @@ class FollowersPage extends React.Component {
           this.setState({
             message: "User added to favorites"
           });
+
+          this.fetchFollowers();
         })
         .catch(error => {
           console.log(error);
@@ -165,7 +167,25 @@ class FollowersPage extends React.Component {
   }
 
   removeFromFavorite(id) {
-    return () => console.log(`Remove #{id}`);
+    return () =>
+      fetch("http://localhost:3000/favorites/", {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({id})
+      })
+        .then(response => {
+          this.setState({
+            message: "User removed from favorites"
+          });
+
+          this.fetchFollowers();
+        })
+        .catch(error => {
+          console.log(error);
+        });
   }
 
   handleSnackbarClose() {

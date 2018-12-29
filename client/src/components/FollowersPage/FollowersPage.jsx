@@ -15,6 +15,8 @@ import Button from "@material-ui/core/Button";
 import BlockIcon from "@material-ui/icons/Block";
 import Tooltip from "@material-ui/core/Tooltip";
 import Snackbar from "@material-ui/core/Snackbar";
+import Star from "@material-ui/icons/Star";
+import StarBorder from "@material-ui/icons/StarBorder";
 import Grid from "@material-ui/core/Grid";
 
 const styles = theme => ({
@@ -142,6 +144,14 @@ class FollowersPage extends React.Component {
         });
   }
 
+  addToFavorite(id) {
+    return () => console.log(`Add #{id}`);
+  }
+
+  removeFromFavorite(id) {
+    return () => console.log(`Remove #{id}`);
+  }
+
   handleSnackbarClose() {
     this.setState({
       message: null
@@ -174,44 +184,25 @@ class FollowersPage extends React.Component {
         </TableHead>
         <TableBody>
           {followers.map(follower => {
-            return (
-              <TableRow key={follower.id}>
+            return <TableRow key={follower.id}>
                 <TableCell>
                   <img className={classes.avatar} src={follower.imageSrc} />
                 </TableCell>
                 <TableCell>{follower.username}</TableCell>
                 <TableCell>
-                  <Button
-                    className={classes.button}
-                    variant="contained"
-                    color="primary"
-                    onClick={
-                      follower.isFollowing
-                        ? this.unfollow(follower.id)
-                        : this.follow(follower.id)
-                    }
-                  >
+                  <Button className={classes.button} variant="contained" color="primary" onClick={follower.isFollowing ? this.unfollow(follower.id) : this.follow(follower.id)}>
                     {follower.isFollowing ? "Unfollow" : "Follow"}
                   </Button>
-                  <Tooltip
-                    title="Will unfollow user and add it to blocked list. So he will never be followed with our jobs"
-                    placement="left"
-                  >
-                    <Button
-                      onClick={
-                        follower.isBlocked
-                          ? this.unblock(follower.id)
-                          : this.block(follower.id)
-                      }
-                      variant="contained"
-                      color="secondary"
-                    >
+                  <Tooltip title="Will unfollow user and add it to blocked list. So he will never be followed with our jobs" placement="left">
+                    <Button onClick={follower.isBlocked ? this.unblock(follower.id) : this.block(follower.id)} variant="contained" color="secondary">
                       {follower.isBlocked ? "Unblock" : "Block"}
                     </Button>
                   </Tooltip>
+                  <Button onClick={follower.isFavorite ? this.removeFromFavorite(follower.id) : this.addToFavorite(follower.id)} variant="contained" color="secondary">
+                    {follower.isFavorite ? <Star /> : <StarBorder />}
+                  </Button>
                 </TableCell>
-              </TableRow>
-            );
+              </TableRow>;
           })}
         </TableBody>
       </Table>

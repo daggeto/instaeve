@@ -49,6 +49,12 @@ export default (sequelize, DataTypes) => {
       foreignKey: "instagram_user_id"
     });
 
+    InstagramUser.belongsToMany(InstagramUser, {
+      as: "Favorite",
+      through: "favorites",
+      foreignKey: "instagram_user_id"
+    });
+
     InstagramUser.hasMany(models.Follower, { as: "FollowersAssoc" });
   };
 

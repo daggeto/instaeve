@@ -1,1 +1,6 @@
-SELECT `InstagramUsers`.username , `InstagramUsers`.`id` FROM `followers` AS `Following` INNER JOIN `instagram_users` as `InstagramUsers` on `InstagramUsers`.`id` = `Following`.`instagram_user_id` LEFT JOIN `followers` as `Followers` on`InstagramUsers`.`id` = `Followers`.`follower_id` and `Followers`.`instagram_user_id` = 1 WHERE `Following`.`follower_id` = 1 AND `Followers`.`follower_id` is null AND `InstagramUsers`.`id` not in ('2483,2484')
+SELECT `InstagramUsers`.username , `InstagramUsers`.`id` FROM `followers` AS `Following` INNER JOIN `instagram_users` as `InstagramUsers` on `InstagramUsers`.`id` = `Following`.`instagram_user_id` LEFT JOIN `followers` as `Followers` on`InstagramUsers`.`id` = `Followers`.`follower_id` and `Followers`.
+
+
+select username, count(*) from `instagram_users` group by username order by count(*) asc;
+
+select count(*) from `followers` where instagram_user_id = 1;

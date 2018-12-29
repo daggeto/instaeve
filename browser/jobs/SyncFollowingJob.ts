@@ -5,6 +5,8 @@ import { get as fetch } from "nested-property";
 import Browser from "../services/Browser";
 import DestroyFollowers from "../services/DestroyFollowers";
 import ResolveUser from "../services/ResolveUser";
+import GraphqlInterceptor from "../services/GraphqlInterceptor";
+import UpdateOrCreateInstagramUser from "../services/UpdateOrCreateInstagramUser";
 
 import HomePage from "../pages/HomePage";
 
@@ -25,7 +27,7 @@ export default class SyncFollowingJob extends Job {
     const { username } = params;
 
     const browser = await Browser.launch({
-      launch: { headless: true },
+      launch: { headless: false },
       browser: {
         onConsole: error => {
           if (
@@ -56,9 +58,8 @@ export default class SyncFollowingJob extends Job {
         throw new Error(`InstagramUser ${username} not exists`);
       }
 
-      let scrappedFollowings = [];
       let hasNext = false;
-      let firstRequestReceived = false;
+      let scannedFollowingNames = [];
 
       const following = await currentInstagramUser
         .getFollowings()
@@ -70,94 +71,114 @@ export default class SyncFollowingJob extends Job {
           }, {});
         });
       const followingInstagramIds = new Set(Object.keys(following));
+      let count = 0;
+      let totalReceivedCount = 0;
 
-      const takeOverFollowersCallback = result => {
-        console.log(result);
-
+      const takeOverFollowersCallback = async result => {
         if (!result.following) {
           return;
         }
 
         this.logProgress(
           `Following count: ${result.following.length}\n Has next: ${
-            result.hasNext
-          }`
-        );
+            result.hasNext}`
+          );
 
-        this.saveFollowings(
-          currentInstagramUser,
-          result.following,
-          following,
-          followingInstagramIds
-        );
+        totalReceivedCount += result.following.length;
 
-        scrappedFollowings = [...scrappedFollowings, ...result.following];
-        hasNext = result.hasNext;
-      };
+        this.logProgress("Saving following.");
+        const addFollowingPromises = result.following.map(
+          async user => {
+            if (scannedFollowingNames.includes(user.node.username)) {
+              this.logProgress("Skipping duplicate: " + user.node.username);
+              return;
+            } else {
+              scannedFollowingNames.push(user.node.username);
+            }
 
-      await homePage.page.setRequestInterception(true);
-      homePage.page.on("request", async interceptedRequest => {
-        if (
-          !interceptedRequest
-            .url()
-            .includes("https://www.instagram.com/graphql/query/?query_hash")
-        ) {
-          return interceptedRequest.continue();
-        }
-
-        this.logProgress(`Graphql request intercepted`);
-
-        this.takeoverFollowers(homePage)
-          .then(takeOverFollowersCallback)
-          .catch(error => {
-            hasNext = false;
-            this.logProgress(
-              "Error taking over next followers page: " + error.message
+            const followingInstagramUser = await UpdateOrCreateInstagramUser.run(
+              {
+                followerData: user.node
+              }
             );
 
-            throw error;
-          });
-        this.logProgress("Continuing request");
-        await sleep(random(SLEEP_FROM, SLEEP_TO));
-        interceptedRequest.continue();
-      });
+            if (!followingInstagramIds.has(user.node.id)) {
+              this.logProgress(
+                `New to follow . Adding: ${user.node.username}`
+              );
 
-      // this.logProgress("Taking over followers!");
-      // this.takeoverFollowers(homePage)
-      //   .then(takeOverFollowersCallback)
-      //   .then(() => {
-      //     firstRequestReceived = true;
-      //   })
-      //   .catch(error => {
-      //     throw error;
-      //   });
+              return currentInstagramUser.addFollowing(followingInstagramUser);
+            } else {
+              followingInstagramIds.delete(user.node.id);
+            }
+          }
+        );
+
+        await Promise.all(addFollowingPromises).catch(error => {
+          this.logProgress("Add followers error: " + error.message);
+        });
+
+        hasNext = result.hasNext;
+        count = result.count;
+      };
+
+      GraphqlInterceptor.run({
+        page: homePage.page,
+        requestCondition: request => {
+          return request
+            .url()
+            .includes(
+              "https://www.instagram.com/graphql/query/?query_hash"
+            );
+        },
+        responseCondition: async response => {
+          if (
+            !response
+              .url()
+              .includes(
+                "https://www.instagram.com/graphql/query/?query_hash"
+              )
+          ) {
+            return false;
+          }
+
+          const result = await response.json();
+          if (!fetch(result, "data.user.edge_follow")) {
+            return false;
+          }
+
+          return true;
+        },
+        process: async response => {
+          const result = await response.json();
+          const hasNext = fetch(
+            result,
+            "data.user.edge_follow.page_info.has_next_page"
+          );
+          const following = fetch(result, "data.user.edge_follow.edges");
+          const count = fetch(result, "data.user.edge_follow.count");
+
+          await takeOverFollowersCallback({
+            following,
+            hasNext,
+            count
+          });
+        }
+      });
 
       const followersPage = await homePage.openFollowing();
 
       while (hasNext) {
-        this.logProgress("Scrolling...");
-        await followersPage.scrollToLastRow();
-        //   //   await this.takeoverFollowers(homePage)
-        //   //     .then(takeOverFollowersCallback)
-        //   //     .catch(error => {
-        //   //       hasNext = false;
-        //   //       this.logProgress(
-        //   //         "Error taking over next followers page: " + error.message
-        //   //       );
-        //   //       throw error;
-        //   //     });
-        //   //   this.logProgress(`Followers scanned: ${followers.length}`);
-        //   //   await sleep(random(SLEEP_FROM, SLEEP_TO));
+        if (!(await followersPage.isLoading())) {
+          this.logProgress("Scrolling to last");
+          await followersPage.scrollToLastRow();
+        }
       }
 
-      this.logProgress(`Total scanned followings: ${scrappedFollowings.length}`);
+      this.logProgress(`Total received count: ${totalReceivedCount} .Total count: ${count}. \n Total scanned followers: ${scannedFollowingNames.length}`);
 
-      if (firstRequestReceived) {
-        this.deleteMissingFollowers(
-          currentInstagramUser,
-          followingInstagramIds,
-          following
-        );
+      if (scannedFollowingNames.length === count) {
+        this.deleteMissingFollowers(currentInstagramUser, followingInstagramIds, following);
       }
     } catch (e) {
       this.logProgress("Failed: " + e.message);
@@ -184,108 +205,6 @@ export default class SyncFollowingJob extends Job {
     DestroyFollowers.run({
       currentInstagramUser,
       instagramUserIds: followersAssocIds
-    });
-  }
-
-  async saveFollowings(
-    currentInstagramUser,
-    responseFollowing: InstagramUserType[],
-    following,
-    followingInstagramIds
-  ) {
-    this.logProgress("Saving following.");
-    const addFollowersPromises = responseFollowing.map(async user => {
-      const followingInstagramUser = await this.updateOrCreateInstagramUser(
-        user.node
-      );
-
-      if (!followingInstagramIds.has(user.node.id)) {
-        this.logProgress(`New to follow . Adding: ${user.node.username}`);
-
-        return currentInstagramUser.addFollowing(followingInstagramUser);
-      } else {
-        followingInstagramIds.delete(user.node.id);
-      }
-    });
-
-    return await Promise.all(addFollowersPromises).catch(error => {
-      this.logProgress("Add followers error: " + error.message);
-    });
-  }
-
-  async updateOrCreateInstagramUser(followerData) {
-    const {
-      id,
-      username,
-      full_name,
-      profile_pic_url,
-      is_private,
-      is_verified
-    } = followerData;
-
-    const followerInstagramUser = await InstagramUser.find({
-      where: {
-        instagram_id: id
-      }
-    });
-
-    if (followerInstagramUser) {
-      return await followerInstagramUser.update({
-        username,
-        full_name,
-        profile_pic_url,
-        is_private,
-        is_verified
-      });
-    }
-
-    return await InstagramUser.create({
-      instagram_id: id,
-      username,
-      full_name,
-      profile_pic_url,
-      is_private,
-      is_verified
-    });
-  }
-
-  takeoverFollowers(page) {
-    return new Promise((resolve, reject) => {
-      page.page
-        .waitForResponse(
-          async response => {
-            if (
-              !response
-                .url()
-                .includes("https://www.instagram.com/graphql/query/?query_hash")
-            ) {
-              return false;
-            }
-
-            const result = await response.json();
-            if (!fetch(result, "data.user.edge_follow")) {
-              return false;
-            }
-
-            console.log("Graphql response catched");
-
-            const hasNext = fetch(
-              result,
-              "data.user.edge_follow.page_info.has_next_page"
-            );
-            const following = fetch(result, "data.user.edge_follow.edges");
-
-            resolve({ following, hasNext });
-
-            return true;
-          },
-          { timeout: 60000 }
-        )
-        .catch(error => {
-          reject(error);
-
-          return false;
-        });
     });
   }
 }

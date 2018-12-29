@@ -23,10 +23,10 @@ async function run() {
   // });
 
   const result = await GetUnfollowersFor.run({
-    user: currentUser
+    user: currentUser, limit: 2
   });
 
-  console.log(result);
+  console.log(result.length);
 }
 
 run();

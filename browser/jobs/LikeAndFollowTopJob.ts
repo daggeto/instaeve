@@ -10,13 +10,17 @@ import PhotoPage from "../pages/PhotoPage";
 import ExplorePage from "../pages/ExplorePage";
 
 export default class LikeAndFollowTopJob extends Job {
+  // static schedule(params) {
+  //   const {hashtag, ...otherParams} = params;
+  //   const hashtags = params.hashtag.split(',');
+  //   return hashtags.map(hashtagUnit => {
+  //     return Job.schedule({ hashtag: hashtagUnit.trim(), ...otherParams });
+  //   });
+  // }
+
   async call(params) {
-    // if (random(0, 50) > 35) {
-    //   this.logProgress("Skipping");
-
-    //   return;
-    // }
-
+    console.log('Running');
+    console.log(params);
     const { hashtags, like, follow, currentUser } = params;
     const hashtag = params.hashtag
       ? params.hashtag

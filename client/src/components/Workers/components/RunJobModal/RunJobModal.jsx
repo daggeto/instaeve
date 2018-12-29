@@ -11,7 +11,7 @@ import {
   CardActions,
   Button
 } from "@material-ui/core";
-import { LikeAndFollowTopJobForm, SyncFollowersJobForm } from "../";
+import {LikeAndFollowTopJobForm, SyncFollowersJobForm, SyncFollowingJobForm } from "../";
 
 const styles = theme => ({
   modal: {
@@ -38,6 +38,10 @@ const Jobs = {
   SyncFollowersJob: {
     name: "Sync followers",
     component: SyncFollowersJobForm
+  },
+  SyncFollowingJob: {
+    name: "Sync followings",
+    component: SyncFollowingJobForm
   }
 };
 

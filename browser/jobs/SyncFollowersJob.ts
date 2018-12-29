@@ -5,6 +5,8 @@ import { get as fetch } from "nested-property";
 import Browser from "../services/Browser";
 import DestroyFollowers from "../services/DestroyFollowers";
 import ResolveUser from "../services/ResolveUser";
+import GraphqlInterceptor from "../services/GraphqlInterceptor";
+import UpdateOrCreateInstagramUser from "../services/UpdateOrCreateInstagramUser";
 
 import HomePage from "../pages/HomePage";
 
@@ -25,7 +27,7 @@ export default class SyncFollowersJob extends Job {
     const { username } = params;
 
     const browser = await Browser.launch({
-      launch: { headless: true },
+      launch: { headless: false },
       browser: {
         onConsole: error => {
           if (
@@ -42,124 +44,179 @@ export default class SyncFollowersJob extends Job {
     });
 
     try {
-      const homePage = new HomePage(browser.page, username);
-      await homePage.open();
+          const homePage = new HomePage(browser.page, username);
+          await homePage.open();
 
-      if (!(await homePage.isLogged())) {
-        this.logProgress("User is not logged. Logging in ...");
-        await login(homePage, browser.page);
-      }
+          if (!(await homePage.isLogged())) {
+            this.logProgress("User is not logged. Logging in ...");
+            await login(homePage, browser.page);
+          }
 
-      const currentInstagramUser = await ResolveUser.run({ user: username });
+          const currentInstagramUser = await ResolveUser.run({
+            user: username
+          });
 
-      if (!currentInstagramUser) {
-        throw new Error(`InstagramUser ${username} not exists`);
-      }
+          if (!currentInstagramUser) {
+            throw new Error(`InstagramUser ${username} not exists`);
+          }
 
-      let scrappedFollowers = [];
-      let hasNext = false;
-      let firstRequestReceived = false;
+          let hasNext = false;
+          let scannedFollowersName = [];
 
-      const followers = await currentInstagramUser
-        .getFollowers()
-        .then(result => {
-          return result.reduce((carry, follower) => {
-            carry[follower.instagram_id] = follower;
+          const followers = await currentInstagramUser
+            .getFollowers()
+            .then(result => {
+              return result.reduce((carry, follower) => {
+                carry[follower.instagram_id] = follower;
 
-            return carry;
-          }, {});
-        });
-      const followersInstagramIds = new Set(Object.keys(followers));
+                return carry;
+              }, {});
+            });
+          const followersInstagramIds = new Set(Object.keys(followers));
+          let count = 0;
+          let totalReceivedCount = 0;
+          const takeOverFollowersCallback = async result => {
+            if (!result.followers) {
+              return;
+            }
 
-      const takeOverFollowersCallback = result => {
-        console.log(result);
+            this.logProgress(`Followers count: ${result.followers.length}\n 
+           Has next: ${result.hasNext}`);
 
-        if (!result.followers) {
-          return;
-        }
+            totalReceivedCount += result.followers.length;
 
-        this.logProgress(
-          `Followers count: ${result.followers.length}\n Has next: ${
-            result.hasNext
-          }`
-        );
+            this.logProgress("Saving followers.");
+            const addFollowersPromises = result.followers.map(
+              async user => {
+                if (scannedFollowersName.includes(user.node.username)) {
+                  this.logProgress(
+                    "Skipping duplicate: " + user.node.username
+                  );
+                  return;
+                } else {
+                  scannedFollowersName.push(user.node.username);
+                }
 
-        this.saveFollowers(
-          currentInstagramUser,
-          result.followers,
-          followers,
-          followersInstagramIds
-        );
+                const followerInstagramUser = await UpdateOrCreateInstagramUser.run(
+                  {
+                    followerData: user.node
+                  }
+                );
 
-        scrappedFollowers = [...scrappedFollowers, ...result.followers];
-        hasNext = result.hasNext;
-      };
+                if (!followersInstagramIds.has(user.node.id)) {
+                  this.logProgress(
+                    `New follower. Adding: ${user.node.username}`
+                  );
 
-      await homePage.page.setRequestInterception(true);
-      homePage.page.on("request", async interceptedRequest => {
-        if (
-          !interceptedRequest
-            .url()
-            .includes("https://www.instagram.com/graphql/query/?query_hash")
-        ) {
-          return interceptedRequest.continue();
-        }
-
-        this.logProgress(`Graphql request intercepted`);
-
-        this.takeoverFollowers(homePage)
-          .then(takeOverFollowersCallback)
-          .catch(error => {
-            hasNext = false;
-            this.logProgress(
-              "Error taking over next followers page: " + error.message
+                  return currentInstagramUser.addFollower(
+                    followerInstagramUser
+                  );
+                } else {
+                  followersInstagramIds.delete(user.node.id);
+                }
+              }
             );
 
-            throw error;
+            await Promise.all(addFollowersPromises).catch(error => {
+              this.logProgress("Add followers error: " + error.message);
+            });
+
+            hasNext = result.hasNext;
+            count = result.count;
+          };
+
+          GraphqlInterceptor.run({
+            page: homePage.page,
+            requestCondition: request => {
+              return request
+                .url()
+                .includes(
+                  "https://www.instagram.com/graphql/query/?query_hash"
+                );
+            },
+            responseCondition: async response => {
+              if (
+                !response
+                  .url()
+                  .includes(
+                    "https://www.instagram.com/graphql/query/?query_hash"
+                  )
+              ) {
+                return false;
+              }
+
+              const result = await response.json();
+              if (!fetch(result, "data.user.edge_followed_by")) {
+                return false;
+              }
+
+              return true;
+            },
+            process: async response => {
+              const result = await response.json();
+              const hasNext = fetch(
+                result,
+                "data.user.edge_followed_by.page_info.has_next_page"
+              );
+              const followers = fetch(
+                result,
+                "data.user.edge_followed_by.edges"
+              );
+              const count = fetch(
+                result,
+                "data.user.edge_followed_by.count"
+              );
+
+              await takeOverFollowersCallback({
+                followers,
+                hasNext,
+                count
+              });
+            }
           });
-        this.logProgress("Continuing request");
-        await sleep(random(SLEEP_FROM, SLEEP_TO));
-        interceptedRequest.continue();
-      });
 
-      // this.logProgress("Taking over followers!");
-      // this.takeoverFollowers(homePage)
-      //   .then(takeOverFollowersCallback)
-      //   .then(() => {
-      //     firstRequestReceived = true;
-      //   })
-      //   .catch(error => {
-      //     throw error;
-      //   });
+          // await homePage.page.setRequestInterception(true);
+          // homePage.page.on("request", async interceptedRequest => {
+          //   if (
+          //     !interceptedRequest
+          //       .url()
+          //       .includes("https://www.instagram.com/graphql/query/?query_hash")
+          //   ) {
+          //     return interceptedRequest.continue();
+          //   }
 
-      const followersPage = await homePage.openFollowers();
+          //   this.logProgress(`Graphql request intercepted`);
 
-      while (hasNext) {
-        this.logProgress("Scrolling...");
-        await followersPage.scrollToLastRow();
-        //   //   await this.takeoverFollowers(homePage)
-        //   //     .then(takeOverFollowersCallback)
-        //   //     .catch(error => {
-        //   //       hasNext = false;
-        //   //       this.logProgress(
-        //   //         "Error taking over next followers page: " + error.message
-        //   //       );
-        //   //       throw error;
-        //   //     });
-        //   //   this.logProgress(`Followers scanned: ${followers.length}`);
-        //   //   await sleep(random(SLEEP_FROM, SLEEP_TO));
-      }
+          //   this.takeoverFollowers(homePage)
+          //     .then(takeOverFollowersCallback)
+          //     .catch(error => {
+          //       hasNext = false;
+          //       this.logProgress(
+          //         "Error taking over next followers page: " + error.message
+          //       );
 
-      this.logProgress(`Total scanned followers: ${scrappedFollowers.length}`);
+          //       throw error;
+          //     });
+          //   this.logProgress("Continuing request");
+          //   await sleep(random(SLEEP_FROM, SLEEP_TO));
+          //   interceptedRequest.continue();
+          // });
 
-      if (firstRequestReceived) {
-        this.deleteMissingFollowers(
-          currentInstagramUser,
-          followersInstagramIds,
-          followers
-        );
-      }
-    } catch (e) {
+          const followersPage = await homePage.openFollowers();
+
+          while (hasNext) {
+            if (!(await followersPage.isLoading())) {
+              this.logProgress("Scrolling to last");
+              await followersPage.scrollToLastRow();
+            }
+          }
+
+          this.logProgress(`Total received count: ${totalReceivedCount} .Total count: ${count}. \n Total scanned followers: ${scannedFollowersName.length}`);
+
+          if (scannedFollowersName.length === count) {
+            this.deleteMissingFollowers(currentInstagramUser, followersInstagramIds, followers);
+          }
+        } catch (e) {
       this.logProgress("Failed: " + e.message);
     }
 
@@ -187,68 +244,6 @@ export default class SyncFollowersJob extends Job {
     });
   }
 
-  async saveFollowers(
-    currentInstagramUser,
-    responseFollowers: InstagramUserType[],
-    followers,
-    followersInstagramIds
-  ) {
-    this.logProgress("Saving followers.");
-    const addFollowersPromises = responseFollowers.map(async user => {
-      const followerInstagramUser = await this.updateOrCreateInstagramUser(
-        user.node
-      );
-
-      if (!followersInstagramIds.has(user.node.id)) {
-        this.logProgress(`New follower. Adding: ${user.node.username}`);
-
-        return currentInstagramUser.addFollower(followerInstagramUser);
-      } else {
-        followersInstagramIds.delete(user.node.id);
-      }
-    });
-
-    return await Promise.all(addFollowersPromises).catch(error => {
-      this.logProgress("Add followers error: " + error.message);
-    });
-  }
-
-  async updateOrCreateInstagramUser(followerData) {
-    const {
-      id,
-      username,
-      full_name,
-      profile_pic_url,
-      is_private,
-      is_verified
-    } = followerData;
-
-    const followerInstagramUser = await InstagramUser.find({
-      where: {
-        instagram_id: id
-      }
-    });
-
-    if (followerInstagramUser) {
-      return await followerInstagramUser.update({
-        username,
-        full_name,
-        profile_pic_url,
-        is_private,
-        is_verified
-      });
-    }
-
-    return await InstagramUser.create({
-      instagram_id: id,
-      username,
-      full_name,
-      profile_pic_url,
-      is_private,
-      is_verified
-    });
-  }
-
   takeoverFollowers(page) {
     return new Promise((resolve, reject) => {
       page.page
@@ -267,20 +262,14 @@ export default class SyncFollowersJob extends Job {
               return false;
             }
 
-            console.log("Graphql response catched");
-
             const hasNext = fetch(
               result,
               "data.user.edge_followed_by.page_info.has_next_page"
             );
             const followers = fetch(result, "data.user.edge_followed_by.edges");
+            const count = fetch(result, "data.user.edge_followed_by.count");
 
-            if (!followers) {
-              console.log("No followers found in response");
-              console.log(result);
-            }
-
-            resolve({ followers, hasNext });
+            resolve({ followers, hasNext, count });
 
             return true;
           },

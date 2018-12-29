@@ -16,8 +16,8 @@ export default class Page {
 
   async isLogged() {
     const [response] = await Promise.all([
-      this.page.$x("//button[text()='Log In']"),
-      this.page.$x("//button[text()='Sign up']")
+      this.page.$x("//*[text()='Log in']"),
+      this.page.$x("//*[text()='Sign up']")
     ]);
 
     if (response.length > 0) {

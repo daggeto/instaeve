@@ -4,6 +4,7 @@ import { randomSleep, sleep } from "../utils";
 
 export default class HomePage extends Page {
   FOLLOWERS_XPATH = "//a[contains(.,'followers')]";
+  FOLLOWING_XPATH = "//a[contains(.,'following')]";
   FOLLOWING_BUTTON_XPATH = "//button[contains(.,'Following')]";
   UNFOLLOW_BUTTON_XPATH = "//button[contains(.,'Unfollow')]";
   FOLLOW_BUTTON_XPATH = "//button[text()='Follow Back' or text()='Follow']";
@@ -71,6 +72,22 @@ export default class HomePage extends Page {
       await followersLinks[0].click();
       await sleep(3000);
       console.log("Followers modal opened");
+
+      return true;
+    });
+
+    return new FollowersPage(this.page);
+  }
+
+  async openFollowing() {
+    if (!this.page) {
+      throw new Error('"page" is missing');
+    }
+
+    await this.page.$x(this.FOLLOWING_XPATH).then(async followersLinks => {
+      await followersLinks[0].click();
+      await sleep(3000);
+      console.log("Followings modal opened");
 
       return true;
     });

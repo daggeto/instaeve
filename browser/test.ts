@@ -1,8 +1,6 @@
 import Models from "./models";
-import BlockUser from "./services/BlockUser";
-import UnblockUser from "./services/UnblockUser";
-import GetFollowersFor from "./services/GetFollowersFor";
-import Unfollow from "./services/Unfollow";
+import GetUnfollowersFor from "./services/GetUnfollowersFor";
+
 
 const { InstagramUser, sequelize } = Models;
 
@@ -14,9 +12,12 @@ async function run() {
     where: { username: "daggetoioioi" }
   });
 
-  const result = await GetFollowersFor.run({ user: currentUser });
+  const result = await GetUnfollowersFor.run({
+    user: currentUser,
+    favoriteFollowee: [2484, 2483]
+  });
 
-  console.log(result);
+  console.log(result.length);
 }
 
 run();

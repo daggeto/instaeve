@@ -4,6 +4,7 @@ import page_helper from "./page_helper";
 // from url directly. #open won't be working here.
 class FollowersPage {
   USER_ROW_PATH = "li.NroHT";
+  SPINNER_CLASS_PATH = "//div[contains(@class, 'W1Bne   ztp9m ')]";
   LAST_USER_ROW_XPATH = "//li[last()]";
 
   page = null;
@@ -23,15 +24,19 @@ class FollowersPage {
     console.log(count);
   }
 
+  async isLoading() {
+    const spinner = await this.page.$x(this.SPINNER_CLASS_PATH);
+
+    return spinner.length > 0;
+  }
+
   async scrollToLastRow() {
-    console.log("Scrolling to last row");
     return this.page
       .$x(this.LAST_USER_ROW_XPATH)
       .then(async lastRow => {
         await lastRow[0].asElement().hover();
-        console.log("Scrolled to " + lastRow[0]);
       })
-      .catch(error => console.log("Error"));
+      .catch(error => console.log(error));
   }
 }
 
